@@ -8,7 +8,7 @@ from torch.utils.data import Dataset
 
 
 def listdir(path: Path, ext: Optional[List[str]] = None) -> List[Path]:
-    if ext:
+    if ext is not None:
         return sorted((p for p in path.iterdir() if p.suffix in ext))
     return sorted(path.iterdir())
 
