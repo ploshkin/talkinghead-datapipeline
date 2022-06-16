@@ -21,6 +21,22 @@ def get_radial_uv(uv_size: int, batch_size: int, device: torch.device) -> torch.
     return albedo
 
 
+def _torch_img_to_np(img):
+    return img.detach().cpu().numpy().transpose(1, 2, 0)
+
+
+def _fix_image(image):
+    # Taken from EMOCA repo.
+    if image.max() < 30.:
+        image = image * 255.
+    image = np.clip(image, 0, 255).astype(np.uint8)
+    return image
+
+
+def to_image(tensor: torch.Tensor) -> np.ndarray:
+    return _fix_image(_torch_img_to_np(tensor))
+
+
 def upsample_mesh(
     vertices, normals, faces, displacement_map, texture_map, dense_template
 ):

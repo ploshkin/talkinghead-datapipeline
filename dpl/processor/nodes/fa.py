@@ -1,39 +1,32 @@
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List
 
 import face_alignment
-from joblib import Parallel, delayed
 import numpy as np
 from torch.utils.data import DataLoader
 
 from dpl.processor.nodes.base import BaseNode, BaseResource
-import dpl.fa
-
-Pred = Optional[Tuple[np.ndarray, Optional[np.ndarray], Optional[np.ndarray]]]
-
-
-def get_bbox_index(bboxes: List[np.ndarray]) -> np.ndarray:
-    "Get index of the bbox with max confidence."
-    return np.argmax(np.array(bboxes)[:, 4])
-
-
-def get_bbox(bboxes: List[np.ndarray]) -> np.ndarray:
-    index = get_bbox_index(bboxes)
-    return bboxes[index]
+import dpl.common
 
 
 def nan_array(*shape: int) -> np.ndarray:
     return np.full(shape, np.nan)
 
 
-# def recognize(
-#     fa: face_alignment.FaceAlignment, path: Path, **kwargs: Any,
-# ) -> Tuple[np.ndarray, np.ndarray]:
-#     return fa.get_landmarks_from_image(path, **kwargs)
+def get_bbox_score(bbox: np.ndarray) -> float:
+    x_left, y_top, x_right, y_bottom, conf = bbox
+    return conf * (x_right - x_left) * (y_bottom - y_top)
+
+
+def get_bbox(bboxes: List[np.ndarray]) -> np.ndarray:
+    if not bboxes:
+        return nan_array(5)
+    return max(bboxes, key=get_bbox_score)
 
 
 class FaceAlignmentResource(BaseResource):
-    def __init__(self, device: str) -> None:
+    def __init__(self, filter_threshold: float, device: str) -> None:
+        self.filter_threshold = filter_threshold
         self.device = device
         self.reset()
 
@@ -42,7 +35,9 @@ class FaceAlignmentResource(BaseResource):
             face_alignment.LandmarksType._2D,
             flip_input=False,
             device=self.device,
-            face_detector_kwargs={"filter_threshold": 0.9},
+            face_detector_kwargs={
+                "filter_threshold": self.filter_threshold,
+            },
         )
         return self
 
@@ -52,9 +47,60 @@ class FaceAlignmentResource(BaseResource):
         self.fa = None
 
 
-class FaceAlignmentNode(BaseNode):
+class FaceDetectionNode(BaseNode):
     input_keys = ["images"]
-    output_keys = ["landmarks", "bboxes"]
+    output_keys = ["raw_bboxes"]
+
+    def __init__(
+        self,
+        filter_threshold: float,
+        batch_size: int,
+        num_workers: int,
+        device: str,
+    ) -> None:
+        super().__init__()
+        self.batch_size = batch_size
+        self.num_workers = num_workers
+        self.resource = FaceAlignmentResource(filter_threshold, device)
+
+    def run_single(
+        self, input_paths: Dict[str, Path], output_paths: Dict[str, Path],
+    ) -> None:
+        bboxes = self.detect_faces(input_paths["images"])
+        self.save_outputs({"raw_bboxes": bboxes}, output_paths)
+
+    def detect_faces(self, images_dir: Path) -> np.ndarray:
+        dataloader = self.make_dataloader(images_dir)
+        if len(dataloader) == 0:
+            raise RuntimError(f"Empty directory: {str(images_dir)!r}")
+
+        bboxes = []
+        for images in dataloader:
+            bboxes_batch = self.resource.fa.face_detector.detect_from_batch(
+                images.to(self.resource.device),
+            )
+            bboxes.extend(map(get_bbox, bboxes_batch))
+
+        return np.stack(bboxes)
+
+    def save_outputs(self, outputs: Dict[str, np.ndarray], paths: Dict[str, Path]) -> None:
+        for key, path in paths.items():
+            path.parent.mkdir(parents=True, exist_ok=True)
+            np.save(path, outputs[key])
+
+    def make_dataloader(self, images_dir: Path) -> DataLoader:
+        return DataLoader(
+            dpl.common.ImageFolderDataset(images_dir),
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+            shuffle=False,
+            pin_memory=True,
+        )
+
+
+class FaceAlignmentNode(FaceDetectionNode):
+    input_keys = ["images"]
+    output_keys = ["landmarks", "raw_bboxes"]
 
     def __init__(self, batch_size: int, num_workers: int, device: str) -> None:
         super().__init__()
@@ -65,96 +111,18 @@ class FaceAlignmentNode(BaseNode):
     def run_single(
         self, input_paths: Dict[str, Path], output_paths: Dict[str, Path],
     ) -> None:
-        # TODO: use 'get_landmarks_from_batch'
-        self._run_single_batched(input_paths, output_paths)
+        bboxes = self.detect_faces(input_paths["images"])
 
-    def _run_single_batched(
-        self, input_paths: Dict[str, Path], output_paths: Dict[str, Path],
-    ) -> None:
-        dataloader = self._make_dataloader(input_paths["images"])
-        if len(dataloader) == 0:
-            return
+        landmarks = np.empty((len(bboxes), 68, 2))
+        image_paths = dpl.common.listdir(input_paths["images"])
+        for index, (bbox, path) in enumerate(zip(bboxes, image_paths)):
+            if np.any(np.isnan(bbox)):
+                landmarks[index] = nan_array(68, 2)
+            else:
+                lmks = self.resource.fa.get_landmarks_from_image(
+                    path, detected_faces=[bbox],
+                )
+                landmarks[index] = lmks[0]
 
-        landmarks = []
-        bboxes = []
-        for index, images in enumerate(dataloader):
-            batch_size = len(images)
-            lmks, _, bbs = self.resource.fa.get_landmarks_from_batch(
-                images.to(self.resource.device), return_bboxes=True,
-            )
-            landmarks.extend(
-                [
-                    lmks[i][: 68] if len(lmks[i]) > 0 else nan_array(68, 2)
-                    for i in range(batch_size)
-                ]
-            )
-            bboxes.extend(
-                [
-                    get_bbox(bbs[i]) if len(bbs[i]) > 0 else nan_array(5)
-                    for i in range(batch_size)
-                ]
-            )
-        outputs = {
-            "landmarks": np.stack(landmarks),
-            "bboxes": np.stack(bboxes),
-        }
-        self._save_outputs(outputs, output_paths)
-
-    # def _run_single_imagewise(
-    #     self, input_paths: Dict[str, Path], output_paths: Dict[str, Path],
-    # ) -> None:
-    #     preds = self.resource.fa.get_landmarks_from_directory(
-    #         str(input_paths["images"]),
-    #         return_bboxes=True,
-    #         show_progress_bar=False,
-    #         recursive=False,
-    #     )
-    #     keys = sorted(preds.keys())
-    #     outputs = {
-    #         "landmarks": np.stack([self._get_lm(preds[key]) for key in keys]),
-    #         "bboxes": np.stack([self._get_bbox(preds[key]) for key in keys]),
-    #     }
-    #     self._save_outputs(outputs, output_paths)
-
-    # def _run_single_dumbparallel(
-    #     self, input_paths: Dict[str, Path], output_paths: Dict[str, Path],
-    # ) -> None:
-    #     paths = sorted(map(str, input_paths["images"].iterdir()))
-    #     with Parallel(n_jobs=4, prefer="threads") as parallel:
-    #         predictions = parallel(
-    #             delayed(recognize)(self.resource.fa, path, return_bboxes=True)
-    #             for path in paths
-    #         )
-    #     outputs = {
-    #         "landmarks": np.stack([self._get_lm(preds) for preds in predictions]),
-    #         "bboxes": np.stack([self._get_bbox(preds) for preds in predictions]),
-    #     }
-    #     self._save_outputs(outputs, output_paths)
-
-    def _save_outputs(self, outputs: Dict[str, np.ndarray], paths: Dict[str, Path]) -> None:
-        for key, path in paths.items():
-            path.parent.mkdir(parents=True, exist_ok=True)
-            np.save(path, outputs[key])
-
-#     def _get_lm(self, preds: Pred) -> np.ndarray:
-#         if preds is None:
-#             return nan_array(68, 2)
-#         landmarks, _, bboxes = preds
-#         index = get_bbox_index(bboxes)
-#         return landmarks[index]
-
-#     def _get_bbox(self, preds: Pred) -> np.ndarray:
-#         if preds is None:
-#             return nan_array(5)
-#         _, _, bboxes = preds
-#         index = get_bbox_index(bboxes)
-#         return bboxes[index]
-
-    def _make_dataloader(self, images: Path) -> DataLoader:
-        return DataLoader(
-            dpl.fa.FaceAlignmentDataset(images),
-            batch_size=self.batch_size,
-            num_workers=self.num_workers,
-            shuffle=False,
-            pin_memory=True,
-        )
+        outputs = {"landmarks": landmarks, "raw_bboxes": bboxes}
+        self.save_outputs(outputs, output_paths)

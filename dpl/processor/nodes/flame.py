@@ -7,6 +7,7 @@ from torch.utils.data import DataLoader
 
 from dpl.processor.nodes.base import BaseNode, BaseResource
 import dpl.flame
+import dpl.common
 
 
 class FlameResource(BaseResource):
@@ -66,17 +67,13 @@ class FlameNode(BaseNode):
     def run_single(
         self, input_paths: Dict[str, Path], output_paths: Dict[str, Path],
     ) -> None:
-        verts = self._decode_flame(
-            input_paths["shape"], input_paths["exp"], input_paths["pose"],
-        )
+        verts = self.decode_flame(input_paths)
         output_paths["verts"].parent.mkdir(parents=True, exist_ok=True)
         np.save(output_paths["verts"], verts)
 
-    def _decode_flame(
-        self, shape: Path, exp: Path, pose: Path,
-    ) -> np.ndarray:
+    def decode_flame(self, input_paths: Dict[str, Path]) -> np.ndarray:
         batched_verts = []
-        dataloader = self._make_dataloader(shape, exp, pose)
+        dataloader = self.make_dataloader(input_paths)
         for index, batch in enumerate(dataloader):
             verts, _, _ = self.resource.model(
                 shape_params=batch["shape"].to(self.resource.device),
@@ -86,9 +83,9 @@ class FlameNode(BaseNode):
             batched_verts.append(verts.detach().cpu().numpy())
         return np.concatenate(batched_verts)
 
-    def _make_dataloader(self, shape: Path, exp: Path, pose: Path) -> DataLoader:
+    def make_dataloader(self, input_paths: Dict[str, Path]) -> DataLoader:
         return DataLoader(
-            dpl.flame.FlameDataset(shape, exp, pose),
+            dpl.common.NumpyDataset(input_paths),
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             shuffle=False,

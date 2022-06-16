@@ -1,3 +1,4 @@
+import collections
 from pathlib import Path
 from typing import Dict, List
 
@@ -6,6 +7,7 @@ import torch
 from torch.utils.data import DataLoader
 
 import dpl.emoca
+import dpl.common
 from dpl.processor.nodes.base import BaseNode, BaseResource
 
 
@@ -29,7 +31,7 @@ class EmocaResource(BaseResource):
 
 
 class EmocaNode(BaseNode):
-    input_keys = ["images", "landmarks", "bboxes"]
+    input_keys = ["crops"]
     output_keys = ["shape", "tex", "exp", "pose", "cam", "light"]
 
     def __init__(
@@ -40,7 +42,6 @@ class EmocaNode(BaseNode):
         num_workers: int = 4,
     ) -> None:
         super().__init__()
-
         self.resource = EmocaResource(weights_path, device)
         self.batch_size = batch_size
         self.num_workers = num_workers
@@ -48,20 +49,14 @@ class EmocaNode(BaseNode):
     def run_single(
         self, input_paths: Dict[str, Path], output_paths: Dict[str, Path],
     ) -> None:
-        outputs = self._estimate_flame_codes(
-            input_paths["images"],
-            input_paths["landmarks"],
-            input_paths["bboxes"],
-        )
-        self._save_outputs(outputs, output_paths)
+        outputs = self.estimate_flame_codes(input_paths)
+        self.save_outputs(outputs, output_paths)
 
-    def _estimate_flame_codes(
-        self, images: Path, landmarks: Path, bboxes: Path,
-    ) -> Dict[str, np.ndarray]:
+    def estimate_flame_codes(self, input_paths: Dict[str, Path]) -> Dict[str, np.ndarray]:
         keys = list(self.outputs.keys())
 
-        batched_codes = {key: list() for key in keys}
-        dataloader = self._make_dataloader(images, landmarks, bboxes)
+        batched_codes = collections.defaultdict(list)
+        dataloader = self.make_dataloader(input_paths)
         for index, batch in enumerate(dataloader):
             codes = self.resource.model.encode(batch.to(self.resource.device))
             codes = {
@@ -76,14 +71,28 @@ class EmocaNode(BaseNode):
             for key in keys
         }
 
-    def _save_outputs(self, outputs: Dict[str, np.ndarray], paths: Dict[str, Path]) -> None:
+    def save_outputs(self, outputs: Dict[str, np.ndarray], paths: Dict[str, Path]) -> None:
         for key, path in paths.items():
             path.parent.mkdir(parents=True, exist_ok=True)
             np.save(path, outputs[key])
 
-    def _make_dataloader(self, images: Path, landmarks: Path, bboxes: Path) -> DataLoader:
+    def make_dataloader(self, input_paths: Dict[str, Path]) -> DataLoader:
         return DataLoader(
-            dpl.emoca.EmocaDataset(images, landmarks, bboxes),
+            dpl.common.ImageFolderDataset(input_paths["crops"], normalize=True),
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+            shuffle=False,
+            pin_memory=True,
+        )
+
+
+class EmocaFromImagesNode(EmocaNode):
+    input_keys = ["images", "bboxes"]
+    output_keys = ["shape", "tex", "exp", "pose", "cam", "light"]
+
+    def make_dataloader(self, input_paths: Dict[str, Path]) -> DataLoader:
+        return DataLoader(
+            dpl.emoca.EmocaDataset(input_paths["images"], input_paths["bboxes"]),
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             shuffle=False,
