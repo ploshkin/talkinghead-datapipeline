@@ -30,7 +30,7 @@ class RenderingResource(BaseResource):
 
         self.reset()
 
-    def __enter__(self) -> 'RenderingResource':
+    def __enter__(self) -> "RenderingResource":
         model = dpl.rendering.SRenderY(
             image_size=self.image_size,
             obj_filename=self.head_template_path,
@@ -38,7 +38,9 @@ class RenderingResource(BaseResource):
         self.model = model.to(self.device)
         self.model.eval()
         self.albedo = util.get_radial_uv(
-            self.uv_size, self.batch_size, self.device,
+            self.uv_size,
+            self.batch_size,
+            self.device,
         )
         return self
 
@@ -57,7 +59,7 @@ class RenderingNode(BaseNode):
         "render_uv": "images",
         "render_normal": "normal_images",
         "render_albedo": "albedo_images",
-        "render_shading":"shading_images",
+        "render_shading": "shading_images",
     }
 
     def __init__(
@@ -84,7 +86,9 @@ class RenderingNode(BaseNode):
         self.num_jobs = num_save_jobs
 
     def run_single(
-        self, input_paths: Dict[str, Path], output_paths: Dict[str, Path],
+        self,
+        input_paths: Dict[str, Path],
+        output_paths: Dict[str, Path],
     ) -> None:
         renders = self.render(input_paths)
         self.save_renders(renders, output_paths)
@@ -96,13 +100,14 @@ class RenderingNode(BaseNode):
         for batch_index, batch in enumerate(dataloader):
             batch_size = len(batch["verts"])
             trans_verts = util.batch_orth_proj(
-                batch["verts"], batch["cam"],
+                batch["verts"],
+                batch["cam"],
             )
-            trans_verts[:, :, 1 :] = - trans_verts[:, :, 1 :]
+            trans_verts[:, :, 1:] = -trans_verts[:, :, 1:]
             renders = self.resource.model(
                 batch["verts"].to(self.resource.device),
                 trans_verts.to(self.resource.device),
-                self.resource.albedo[: batch_size],
+                self.resource.albedo[:batch_size],
                 batch["light"].to(self.resource.device),
             )
             for key in self.__class__.output_keys:
@@ -112,7 +117,9 @@ class RenderingNode(BaseNode):
         return render_lists
 
     def save_renders(
-        self, renders: Dict[str, List[np.ndarray]], output_paths: Dict[str, Path],
+        self,
+        renders: Dict[str, List[np.ndarray]],
+        output_paths: Dict[str, Path],
     ) -> None:
         for key, output_dir in output_paths.items():
             output_dir.mkdir(parents=True, exist_ok=True)
@@ -121,7 +128,7 @@ class RenderingNode(BaseNode):
                     delayed(io.imsave)(
                         output_dir / f"{i:06d}.jpg",
                         renders[key][i],
-                        plugin='pil',
+                        plugin="pil",
                         quality=95,
                     )
                     for i in range(len(renders[key]))

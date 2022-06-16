@@ -17,7 +17,7 @@ class EmocaResource(BaseResource):
         self.device = torch.device(device)
         self.reset()
 
-    def __enter__(self) -> 'EmocaResource':
+    def __enter__(self) -> "EmocaResource":
         model = dpl.emoca.EmocaInferenceWrapper()
         model.load_state_dict(torch.load(self.weights_path))
         self.model = model.to(self.device)
@@ -47,12 +47,16 @@ class EmocaNode(BaseNode):
         self.num_workers = num_workers
 
     def run_single(
-        self, input_paths: Dict[str, Path], output_paths: Dict[str, Path],
+        self,
+        input_paths: Dict[str, Path],
+        output_paths: Dict[str, Path],
     ) -> None:
         outputs = self.estimate_flame_codes(input_paths)
         self.save_outputs(outputs, output_paths)
 
-    def estimate_flame_codes(self, input_paths: Dict[str, Path]) -> Dict[str, np.ndarray]:
+    def estimate_flame_codes(
+        self, input_paths: Dict[str, Path]
+    ) -> Dict[str, np.ndarray]:
         keys = list(self.outputs.keys())
 
         batched_codes = collections.defaultdict(list)
@@ -60,18 +64,16 @@ class EmocaNode(BaseNode):
         for index, batch in enumerate(dataloader):
             codes = self.resource.model.encode(batch.to(self.resource.device))
             codes = {
-                key: tensor.detach().cpu().numpy()
-                for key, tensor in codes.items()
+                key: tensor.detach().cpu().numpy() for key, tensor in codes.items()
             }
             for key in keys:
                 batched_codes[key].append(codes[key])
 
-        return {
-            key: np.concatenate(batched_codes[key])
-            for key in keys
-        }
+        return {key: np.concatenate(batched_codes[key]) for key in keys}
 
-    def save_outputs(self, outputs: Dict[str, np.ndarray], paths: Dict[str, Path]) -> None:
+    def save_outputs(
+        self, outputs: Dict[str, np.ndarray], paths: Dict[str, Path]
+    ) -> None:
         for key, path in paths.items():
             path.parent.mkdir(parents=True, exist_ok=True)
             np.save(path, outputs[key])

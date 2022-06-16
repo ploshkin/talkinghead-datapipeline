@@ -24,12 +24,12 @@ class NodeExecReport:
         self.missing_inputs.append(inputs)
 
     @classmethod
-    def no_information(cls, name: str, total: int = -1) -> 'NodeExecReport':
+    def no_information(cls, name: str, total: int = -1) -> "NodeExecReport":
         return cls(name, total, None, None, None)
 
 
 class BaseResource:
-    def __enter__(self) -> 'BaseResource':
+    def __enter__(self) -> "BaseResource":
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
@@ -55,7 +55,9 @@ class BaseNode(metaclass=NodeRegistry):
         self.resource = EmptyResource()
 
     def init(
-        self, inputs: Dict[str, List[Path]], outputs: Dict[str, List[Path]],
+        self,
+        inputs: Dict[str, List[Path]],
+        outputs: Dict[str, List[Path]],
     ) -> None:
         self._check_inputs(inputs)
         self._check_outputs(outputs)
@@ -83,12 +85,8 @@ class BaseNode(metaclass=NodeRegistry):
         report = NodeExecReport(name, len(self))
         with self.resource:
             for index in iterator:
-                input_paths = {
-                    key: self.inputs[key][index] for key in self.inputs
-                }
-                output_paths = {
-                    key: self.outputs[key][index] for key in self.outputs
-                }
+                input_paths = {key: self.inputs[key][index] for key in self.inputs}
+                output_paths = {key: self.outputs[key][index] for key in self.outputs}
                 if self._check_inputs_exist(input_paths):
                     try:
                         self.run_single(input_paths, output_paths)
@@ -103,7 +101,9 @@ class BaseNode(metaclass=NodeRegistry):
 
     @abc.abstractmethod
     def run_single(
-        self, input_paths: Dict[str, Path], output_paths: Dict[str, Path],
+        self,
+        input_paths: Dict[str, Path],
+        output_paths: Dict[str, Path],
     ) -> None:
         pass
 
@@ -113,7 +113,8 @@ class BaseNode(metaclass=NodeRegistry):
     def _check_inputs(self, inputs: Dict[str, List[Path]]) -> None:
         self._check_num_paths(inputs)
         missing, extra = self._get_missing_and_extra(
-            inputs, self.__class__.input_keys,
+            inputs,
+            self.__class__.input_keys,
         )
         if missing:
             raise RuntimeError(f"These inputs are missing: {missing}")
@@ -121,7 +122,8 @@ class BaseNode(metaclass=NodeRegistry):
     def _check_outputs(self, outputs: Dict[str, List[Path]]) -> None:
         self._check_num_paths(outputs)
         missing, extra = self._get_missing_and_extra(
-            outputs, self.__class__.output_keys,
+            outputs,
+            self.__class__.output_keys,
         )
         if missing:
             raise RuntimeError(f"These inputs are missing: {missing}")

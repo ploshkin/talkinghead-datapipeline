@@ -17,7 +17,7 @@ class FlameDims:
     light: int = 27
 
     @classmethod
-    def default(cls) -> 'FlameDims':
+    def default(cls) -> "FlameDims":
         return cls()
 
     def get_ordered_lengths(self, order: Optional[List[str]] = None) -> List[int]:
@@ -48,12 +48,12 @@ class EmocaInferenceWrapper(nn.Module):
         self.dims = flame_dims
         self.n_detail = n_detail
 
-        self.flame_order = ['shape', 'tex', 'exp', 'pose' , 'cam', 'light']
+        self.flame_order = ["shape", "tex", "exp", "pose", "cam", "light"]
 
         if detail_conditioning is None:
             # Only needed for detail tecture reconstruction.
             # See stage 3 in decode() of the original DecaModule.
-            self.detail_conditioning = ['jawpose', 'expression', 'detail']
+            self.detail_conditioning = ["jawpose", "expression", "detail"]
         else:
             self.detail_conditioning = detail_conditioning
 
@@ -63,10 +63,10 @@ class EmocaInferenceWrapper(nn.Module):
     def encode(self, images: torch.Tensor) -> Dict[str, torch.Tensor]:
         """Forward encoding pass of the model.
         Takes a batch of images and returns the corresponding latent codes for each image.
-        
+
         Parameters
         ----------
-        images: Batch of images to encode, shape (B, [K,] 3, H, W). 
+        images: Batch of images to encode, shape (B, [K,] 3, H, W).
 
         Returns
         -------
@@ -75,9 +75,9 @@ class EmocaInferenceWrapper(nn.Module):
         codedict = {}
 
         # [B, K, 3, size, size] ==> [BxK, 3, size, size]
-        nc, h, w = images.shape[-3 :]
+        nc, h, w = images.shape[-3:]
         images = images.view(-1, nc, h, w)
-        codedict['images'] = images
+        codedict["images"] = images
 
         # 1) COARSE STAGE
         # forward pass of the coarse encoder
@@ -88,7 +88,7 @@ class EmocaInferenceWrapper(nn.Module):
         all_detailcode = self.E_detail(images)
         # identity-based detail code
         detailcode = all_detailcode[:, : self.n_detail]
-        codedict['detailcode'] = detailcode
+        codedict["detailcode"] = detailcode
 
         return codedict
 
@@ -98,21 +98,21 @@ class EmocaInferenceWrapper(nn.Module):
 
         start = 0
         for key, length in zip(self.flame_order, lengths):
-            params[key] = code[:, start: start + length]
+            params[key] = code[:, start : start + length]
             start += length
 
-        params['light'] = params['light'].reshape(code.shape[0], 9, 3)
+        params["light"] = params["light"].reshape(code.shape[0], 9, 3)
         return params
 
     def _compute_condition_dim(self):
         n_cond = 0
-        if 'globalpose' in self.detail_conditioning:
+        if "globalpose" in self.detail_conditioning:
             n_cond += 3
-        if 'jawpose' in self.detail_conditioning:
+        if "jawpose" in self.detail_conditioning:
             n_cond += 3
-        if 'identity' in self.detail_conditioning:
+        if "identity" in self.detail_conditioning:
             n_cond += self.dims.shape
-        if 'expression' in self.detail_conditioning:
+        if "expression" in self.detail_conditioning:
             n_cond += self.dims.exp
 
         return n_cond
@@ -125,7 +125,7 @@ class EmocaInferenceWrapper(nn.Module):
             latent_dim=self.n_detail + n_cond,
             out_channels=1,
             out_scale=0.01,
-            sample_mode='bilinear',
+            sample_mode="bilinear",
         )
         self.E_expression = ResnetEncoder(self.dims.exp)
 
@@ -133,5 +133,5 @@ class EmocaInferenceWrapper(nn.Module):
         deca_code = self.E_flame(images)
         expcode = self.E_expression(images)
         params = self.decompose_code(deca_code)
-        params['exp'] = expcode
+        params["exp"] = expcode
         return params

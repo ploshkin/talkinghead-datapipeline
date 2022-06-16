@@ -22,7 +22,7 @@ class Engine:
         self._nodes = None
 
     @classmethod
-    def from_config(cls, path: Path) -> 'Engine':
+    def from_config(cls, path: Path) -> "Engine":
         with open(path) as ifile:
             config = json.load(ifile)
 
@@ -33,10 +33,7 @@ class Engine:
 
     def set_nodes(self, node_params: List[Tuple[str, Dict[str, Any]]]) -> None:
         node_classes = get_node_classes()
-        self._nodes = [
-            node_classes[name](**params)
-            for name, params in node_params
-        ]
+        self._nodes = [node_classes[name](**params) for name, params in node_params]
         self._check_path_templates()
 
     def init(self, input_root: Path, inputs: Dict[str, List[Path]]) -> None:
@@ -78,7 +75,9 @@ class Engine:
             ]
         return paths
 
-    def _deduce_names_from_inputs(self, root: Path, inputs: Dict[str, List[Path]]) -> List[str]:
+    def _deduce_names_from_inputs(
+        self, root: Path, inputs: Dict[str, List[Path]]
+    ) -> List[str]:
         if not inputs:
             return []
         first_key = list(inputs.keys())[0]
@@ -88,7 +87,6 @@ class Engine:
         ]
 
     def is_initialized(self) -> bool:
-        return (
-            self._nodes is not None
-            and all((node.is_initialized() for node in self._nodes))
+        return self._nodes is not None and all(
+            (node.is_initialized() for node in self._nodes)
         )

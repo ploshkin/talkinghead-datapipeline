@@ -22,8 +22,9 @@ class CropResize:
         self.save_kwargs = save_kwargs or {}
 
     def __call__(self, source: Path, target: Path, bbox: np.ndarray) -> None:
-        Image.open(source).crop(bbox[: 4]).resize(
-            self.size_hw, self.resample,
+        Image.open(source).crop(bbox[:4]).resize(
+            self.size_hw,
+            self.resample,
         ).save(target, **self.save_kwargs)
 
 
@@ -42,7 +43,9 @@ class CropNode(BaseNode):
         self.num_jobs = num_jobs
 
     def run_single(
-        self, input_paths: Dict[str, Path], output_paths: Dict[str, Path],
+        self,
+        input_paths: Dict[str, Path],
+        output_paths: Dict[str, Path],
     ) -> None:
         images_dir = input_paths["images"]
 
@@ -55,8 +58,7 @@ class CropNode(BaseNode):
         output_paths["crops"].mkdir(parents=True, exist_ok=True)
         image_paths = dpl.common.listdir(images_dir)
         crop_paths = [
-            output_paths["crops"] / path.relative_to(images_dir)
-            for path in image_paths
+            output_paths["crops"] / path.relative_to(images_dir) for path in image_paths
         ]
 
         iterator = zip(image_paths, crop_paths, bboxes)

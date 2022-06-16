@@ -30,7 +30,7 @@ class FaceAlignmentResource(BaseResource):
         self.device = device
         self.reset()
 
-    def __enter__(self) -> 'FaceAlignmentResource':
+    def __enter__(self) -> "FaceAlignmentResource":
         self.fa = face_alignment.FaceAlignment(
             face_alignment.LandmarksType._2D,
             flip_input=False,
@@ -64,7 +64,9 @@ class FaceDetectionNode(BaseNode):
         self.resource = FaceAlignmentResource(filter_threshold, device)
 
     def run_single(
-        self, input_paths: Dict[str, Path], output_paths: Dict[str, Path],
+        self,
+        input_paths: Dict[str, Path],
+        output_paths: Dict[str, Path],
     ) -> None:
         bboxes = self.detect_faces(input_paths["images"])
         self.save_outputs({"raw_bboxes": bboxes}, output_paths)
@@ -83,7 +85,9 @@ class FaceDetectionNode(BaseNode):
 
         return np.stack(bboxes)
 
-    def save_outputs(self, outputs: Dict[str, np.ndarray], paths: Dict[str, Path]) -> None:
+    def save_outputs(
+        self, outputs: Dict[str, np.ndarray], paths: Dict[str, Path]
+    ) -> None:
         for key, path in paths.items():
             path.parent.mkdir(parents=True, exist_ok=True)
             np.save(path, outputs[key])
@@ -109,7 +113,9 @@ class FaceAlignmentNode(FaceDetectionNode):
         self.resource = FaceAlignmentResource(device)
 
     def run_single(
-        self, input_paths: Dict[str, Path], output_paths: Dict[str, Path],
+        self,
+        input_paths: Dict[str, Path],
+        output_paths: Dict[str, Path],
     ) -> None:
         bboxes = self.detect_faces(input_paths["images"])
 
@@ -120,7 +126,8 @@ class FaceAlignmentNode(FaceDetectionNode):
                 landmarks[index] = nan_array(68, 2)
             else:
                 lmks = self.resource.fa.get_landmarks_from_image(
-                    path, detected_faces=[bbox],
+                    path,
+                    detected_faces=[bbox],
                 )
                 landmarks[index] = lmks[0]
 

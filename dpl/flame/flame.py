@@ -72,7 +72,7 @@ class FLAME(nn.Module):
         shapedirs = to_tensor(to_np(flame_model.shapedirs), dtype=self.dtype)
         shapedirs = torch.cat(
             [
-                shapedirs[:, :, : n_shape],
+                shapedirs[:, :, :n_shape],
                 shapedirs[:, :, 300 : 300 + n_exp],
             ],
             2,

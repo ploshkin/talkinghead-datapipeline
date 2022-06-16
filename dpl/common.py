@@ -15,7 +15,10 @@ def listdir(path: Path, ext: Optional[List[str]] = None) -> List[Path]:
 
 class ImageFolderDataset(Dataset):
     def __init__(
-        self, images_dir: Path, ext: str = ".jpg", normalize: bool = False,
+        self,
+        images_dir: Path,
+        ext: str = ".jpg",
+        normalize: bool = False,
     ) -> None:
         super().__init__()
         self.paths = listdir(images_dir, [ext])
@@ -24,7 +27,7 @@ class ImageFolderDataset(Dataset):
     def __getitem__(self, index: int) -> torch.Tensor:
         image = io.imread(self.paths[index])
         if self.normalize:
-            image = image.astype(np.float32) / 255.
+            image = image.astype(np.float32) / 255.0
         return torch.tensor(image.transpose(2, 0, 1))
 
     def __len__(self) -> int:
@@ -43,9 +46,7 @@ class NumpyDataset(Dataset):
 
         for key, array in self.arrays.items():
             if len(array) != length:
-                raise RuntimeError(
-                    f"Lengths must be equal: ('{main_key}', '{key}')"
-                )
+                raise RuntimeError(f"Lengths must be equal: ('{main_key}', '{key}')")
 
         self._length = length
 

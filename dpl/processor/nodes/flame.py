@@ -26,7 +26,7 @@ class FlameResource(BaseResource):
         self.device = torch.device(device)
         self.reset()
 
-    def __enter__(self) -> 'FlameResource':
+    def __enter__(self) -> "FlameResource":
         model = dpl.flame.FLAME(
             self.flame_model_path,
             self.flame_lmk_embedding_path,
@@ -59,13 +59,19 @@ class FlameNode(BaseNode):
     ) -> None:
         super().__init__()
         self.resource = FlameResource(
-            flame_model_path, flame_lmk_embedding_path, n_shape, n_exp, device,
+            flame_model_path,
+            flame_lmk_embedding_path,
+            n_shape,
+            n_exp,
+            device,
         )
         self.batch_size = batch_size
         self.num_workers = num_workers
 
     def run_single(
-        self, input_paths: Dict[str, Path], output_paths: Dict[str, Path],
+        self,
+        input_paths: Dict[str, Path],
+        output_paths: Dict[str, Path],
     ) -> None:
         verts = self.decode_flame(input_paths)
         output_paths["verts"].parent.mkdir(parents=True, exist_ok=True)

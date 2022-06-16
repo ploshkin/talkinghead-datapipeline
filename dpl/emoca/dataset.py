@@ -21,7 +21,7 @@ class EmocaDataset(ImageFolderDataset):
         super().__init__(images_dir, ext)
         self.size_hw = size_hw
         self.bboxes = np.load(bboxes_path)
-        
+
         if len(self) != len(self.bboxes):
             raise RuntimeError("Lengths must be equal")
 
@@ -31,9 +31,9 @@ class EmocaDataset(ImageFolderDataset):
     def __getitem__(self, index: int) -> torch.Tensor:
         image = Image.open(self.paths[index])
         image_array = np.array(
-            image
-            .crop(self.bboxes[index][: 4])
-            .resize(self.size_hw, Image.Resampling.LANCZOS),
+            image.crop(self.bboxes[index][:4]).resize(
+                self.size_hw, Image.Resampling.LANCZOS
+            ),
             dtype=np.float32,
         )
-        return torch.tensor(image_array.transpose(2, 0, 1) / 255.)
+        return torch.tensor(image_array.transpose(2, 0, 1) / 255.0)

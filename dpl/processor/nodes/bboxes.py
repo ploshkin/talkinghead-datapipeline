@@ -16,7 +16,9 @@ class TransformRawBboxesNode(BaseNode):
         self.pad = extend_factor
 
     def run_single(
-        self, input_paths: Dict[str, Path], output_paths: Dict[str, Path],
+        self,
+        input_paths: Dict[str, Path],
+        output_paths: Dict[str, Path],
     ) -> None:
         raw_bboxes = np.load(input_paths["raw_bboxes"])
         if np.any(np.isnan(raw_bboxes)):
@@ -29,7 +31,9 @@ class TransformRawBboxesNode(BaseNode):
         output_paths["bboxes"].parent.mkdir(parents=True, exist_ok=True)
         np.save(output_paths["bboxes"], bboxes)
 
-    def _transform_bbox(self, bbox: np.ndarray, dtype: np.dtype = np.int64) -> np.ndarray:
+    def _transform_bbox(
+        self, bbox: np.ndarray, dtype: np.dtype = np.int64
+    ) -> np.ndarray:
         return util.to_integer(
             util.pad_bbox(util.to_square(bbox), self.pad),
             dtype=dtype,

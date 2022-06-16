@@ -27,8 +27,8 @@ def _torch_img_to_np(img):
 
 def _fix_image(image):
     # Taken from EMOCA repo.
-    if image.max() < 30.:
-        image = image * 255.
+    if image.max() < 30.0:
+        image = image * 255.0
     image = np.clip(image, 0, 255).astype(np.uint8)
     return image
 
@@ -967,9 +967,7 @@ def load_openpose_landmarks(fname):
     )
     landmarks = lmks_with_confidence[:68]
     lmks_confidence = lmks_with_confidence[:68, 2]
-    lmks_confidence = lmks_confidence * (lmks_confidence > 0.41).astype(
-        float
-    )
+    lmks_confidence = lmks_confidence * (lmks_confidence > 0.41).astype(float)
     landmarks[:68, 2] = lmks_confidence  # this is 68 * 3
     return landmarks
 
