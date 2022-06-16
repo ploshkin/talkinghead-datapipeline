@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import List, Optional
 
 import librosa
+import numpy as np
 import torch
 from torch.utils.data import Dataset
 
@@ -14,7 +15,7 @@ class WavDataset(Dataset):
     EXT: str = ".wav"
 
     def __init__(self, paths: List[Path], sample_rate: Optional[int] = None) -> None:
-        self.paths = common.listdir(paths, [WavDataset.EXT])
+        self.paths = paths
         self.sample_rate = sample_rate or WavDataset.SAMPLE_RATE
 
     def __getitem__(self, index: int) -> np.ndarray:

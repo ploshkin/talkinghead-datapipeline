@@ -4,8 +4,9 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
-from dpl.processor.nodes.base import BaseNode, BaseResource
+from dpl.processor.nodes.base import BaseNode, BaseResource, NodeExecReport
 import dpl.wav2vec
 import dpl.common
 
@@ -69,7 +70,7 @@ class Wav2vecNode(BaseNode):
 
                 else:
                     # TODO: Parallelize saving?
-                    for offset in enumerate(batch_size):
+                    for offset in range(batch_size):
                         index = global_index + offset
                         for key, value in outputs.items():
                             path = self.outputs[key][index]

@@ -1,3 +1,4 @@
+import dpl.processor.nodes.audio
 import dpl.processor.nodes.bboxes
 import dpl.processor.nodes.crop
 import dpl.processor.nodes.emoca
