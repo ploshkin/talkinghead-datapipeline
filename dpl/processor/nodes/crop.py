@@ -35,11 +35,15 @@ class CropNode(BaseNode):
     def __init__(
         self,
         size_hw: Tuple[int, int],
+        input_ext: str = ".jpg",
+        output_ext: str = ".jpg",
         num_jobs: int = 32,
         save_kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
         super().__init__()
         self.cropper = CropResize(size_hw, save_kwargs=save_kwargs)
+        self.input_ext = input_ext
+        self.output_ext = output_ext
         self.num_jobs = num_jobs
 
     def run_single(
@@ -55,10 +59,12 @@ class CropNode(BaseNode):
                 f"NaN values in bboxes, source = '{input_paths['bboxes']}'."
             )
 
-        output_paths["crops"].mkdir(parents=True, exist_ok=True)
-        image_paths = dpl.common.listdir(images_dir)
+        crops_dir = output_paths["crops"]
+        crops_dir.mkdir(parents=True, exist_ok=True)
+        image_paths = dpl.common.listdir(images_dir, [self.input_ext])
         crop_paths = [
-            output_paths["crops"] / path.relative_to(images_dir) for path in image_paths
+            crops_dir / path.relative_to(images_dir).with_suffix(self.output_ext)
+            for path in image_paths
         ]
 
         iterator = zip(image_paths, crop_paths, bboxes)

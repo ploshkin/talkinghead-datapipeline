@@ -40,10 +40,10 @@ class Engine:
         names = self._deduce_names_from_inputs(input_root, inputs)
         for index, node in enumerate(self._nodes):
             _cls = node.__class__
-            if index == 0:
-                _inputs = inputs
-            else:
-                _inputs = self._make_paths(names, _cls.input_keys)
+            _inputs = self._make_paths(names, _cls.input_keys)
+            for key in _inputs:
+                if key in inputs:
+                    _inputs[key] = inputs[key][:]
             _outputs = self._make_paths(names, _cls.output_keys)
             node.init(_inputs, _outputs)
 

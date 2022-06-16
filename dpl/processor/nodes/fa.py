@@ -74,7 +74,7 @@ class FaceDetectionNode(BaseNode):
     def detect_faces(self, images_dir: Path) -> np.ndarray:
         dataloader = self.make_dataloader(images_dir)
         if len(dataloader) == 0:
-            raise RuntimError(f"Empty directory: {str(images_dir)!r}")
+            raise RuntimeError(f"Empty directory: {str(images_dir)!r}")
 
         bboxes = []
         for images in dataloader:
