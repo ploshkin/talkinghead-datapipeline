@@ -7,7 +7,7 @@ from dpl.processor.engine import Engine
 from dpl.processor.nodes.base import NodeExecReport
 
 DEFAULT_OUTPUT_DIR = "/data/datasets/dpl_cache"
-DEFAULT_REPORT_PATH = f"{DEFAULT_CACHE_DIR}/report.json"
+DEFAULT_REPORT_PATH = f"{DEFAULT_OUTPUT_DIR}/report.json"
 
 
 def abs_path(path: str) -> Path:
@@ -29,7 +29,7 @@ def parse_args():
 def read_inputs(path) -> Dict[str, Path]:
     with open(path) as ifile:
         inputs = json.load(ifile)
-    return {key: list(map(Path, paths)) for key, paths in inputs.items()}
+    return {key: Path(path) for key, path in inputs.items()}
 
 
 def save_report(path: Path, reports: List[NodeExecReport]) -> None:

@@ -88,7 +88,9 @@ class EmocaNode(BaseNode):
 
     def make_dataloader(self, input_paths: Dict[str, Path]) -> DataLoader:
         return DataLoader(
-            dpl.common.ImageFolderDataset(input_paths["crops"], normalize=True),
+            dpl.common.ImageFolderDataset(
+                input_paths["crops"], size_hw=(224, 224), normalize=True
+            ),
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             shuffle=False,

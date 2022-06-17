@@ -1,9 +1,10 @@
 import os
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import skimage.io as io
+import skimage.transform as transform
 import torch
 from torch.utils.data import Dataset
 
@@ -30,16 +31,29 @@ class ImageFolderDataset(Dataset):
         self,
         images_dir: Path,
         ext: str = ".jpg",
+        size_hw: Optional[Tuple[int, int]] = None,
         normalize: bool = False,
     ) -> None:
         super().__init__()
         self.paths = listdir(images_dir, [ext])
+        self.size_hw = size_hw
         self.normalize = normalize
 
     def __getitem__(self, index: int) -> torch.Tensor:
-        image = io.imread(self.paths[index])
+        image = io.imread(self.paths[index]).astype(np.float32)
+        if self.size_hw is not None:
+            h, w = image.shape[:2]
+            if (h, w) != self.size_hw:
+                image = transform.resize(
+                    image,
+                    self.size_hw,
+                    anti_aliasing=True,
+                    preserve_range=True,
+                )
+
         if self.normalize:
-            image = image.astype(np.float32) / 255.0
+            image /= 255.0
+
         return torch.tensor(image.transpose(2, 0, 1))
 
     def __len__(self) -> int:
