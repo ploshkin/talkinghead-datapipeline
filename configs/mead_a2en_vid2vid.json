@@ -1,0 +1,83 @@
+[
+  {
+    "name": "VideoToImagesNode",
+    "params": {
+      "ext": ".jpg",
+      "num_jobs": 32
+    }
+  },
+  {
+    "name": "VideoToWavNode",
+    "params": {
+      "num_jobs": 32
+    }
+  },
+  {
+    "name": "Wav2vecNode",
+    "params": {
+      "device": "cuda:1"
+    }
+  },
+  {
+    "name": "FaceDetectionNode",
+    "params": {
+      "filter_threshold": 0.9,
+      "device": "cuda:1",
+      "batch_size": 16,
+      "num_workers": 4
+    }
+  },
+  {
+    "name": "TransformRawBboxesNode",
+    "params": {
+      "extend_factor": 0.2
+    }
+  },
+  {
+    "name": "CropNode",
+    "params": {
+      "size_hw": [
+        320,
+        320
+      ],
+      "input_ext": ".jpg",
+      "output_ext": ".jpg",
+      "num_jobs": 32,
+      "save_kwargs": {
+        "quality": 95
+      }
+    }
+  },
+  {
+    "name": "EmocaNode",
+    "params": {
+      "weights_path": "/home/dlex/reps/datapipeline/assets/emoca.pth",
+      "device": "cuda:1",
+      "batch_size": 16,
+      "num_workers": 4
+    }
+  },
+  {
+    "name": "FlameNode",
+    "params": {
+      "flame_model_path": "/home/dlex/reps/datapipeline/assets/generic_model.pkl",
+      "flame_lmk_embedding_path": "/home/dlex/reps/datapipeline/assets/landmark_embedding.npy",
+      "device": "cuda:1",
+      "n_shape": 100,
+      "n_exp": 50,
+      "batch_size": 64,
+      "num_workers": 4
+    }
+  },
+  {
+    "name": "RenderingNode",
+    "params": {
+      "head_template_path": "/home/dlex/reps/datapipeline/assets/head_template.obj",
+      "image_size": 320,
+      "device": "cuda:1",
+      "uv_size": 256,
+      "batch_size": 64,
+      "num_workers": 4
+    }
+  }
+]
