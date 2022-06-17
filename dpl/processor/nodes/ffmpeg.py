@@ -41,22 +41,21 @@ class FfmpegBaseNode(BaseNode):
         super().__init__()
         self.num_jobs = num_jobs
 
-    def __call__(self, verbose: bool = False) -> NodeExecReport:
+    def run_sequence(self, start: int, num: int, verbose: bool) -> NodeExecReport:
         name = self.__class__.__name__
-
         if self.is_base():
             raise RuntimeError(f"This is instance of the base class: {name}")
 
-        if not self.is_initialized():
-            raise RuntimeError("Inputs and outputs are not specified yet.")
-
-        report = NodeExecReport.no_information(name, total=len(self))
+        report = NodeExecReport.no_information(name, start, num)
 
         input_key = self.input_types[0].key
         output_key = self.output_types[0].key
-        iterator = zip(self.inputs[input_key], self.outputs[output_key])
+        iterator = zip(
+            self.inputs[input_key][start : start + num],
+            self.outputs[output_key][start : start + num],
+        )
         if verbose:
-            iterator = tqdm(iterator, desc=name, total=len(self))
+            iterator = tqdm(iterator, desc=name, total=num)
 
         convert_fn = self.get_convert_fn()
         with Parallel(n_jobs=self.num_jobs, prefer="processes") as parallel:

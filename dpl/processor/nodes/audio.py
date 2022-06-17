@@ -44,18 +44,15 @@ class Wav2vecNode(BaseNode):
         self.batch_size = batch_size
         self.num_workers = num_workers
 
-    def __call__(self, verbose: bool = False) -> NodeExecReport:
-        if not self.is_initialized():
-            raise RuntimeError("Inputs and outputs are not specified yet.")
-
+    def run_sequence(self, start: int, num: int, verbose: bool) -> NodeExecReport:
         name = self.__class__.__name__
-        report = NodeExecReport(name, total=len(self))
+        report = NodeExecReport(name, start, num)
 
-        dataloader = self.make_dataloader()
+        dataloader = self.make_dataloader(start, num)
         sample_rate = dataloader.dataset.sample_rate
 
         if verbose:
-            dataloader = tqdm(dataloader, desc=name, total=len(self))
+            dataloader = tqdm(dataloader, desc=name, total=num)
 
         with self.resource:
             global_index = 0
@@ -82,9 +79,9 @@ class Wav2vecNode(BaseNode):
 
         return report
 
-    def make_dataloader(self) -> DataLoader:
+    def make_dataloader(self, start: int, num: int) -> DataLoader:
         return DataLoader(
-            dpl.wav2vec.WavDataset(self.inputs["wav"]),
+            dpl.wav2vec.WavDataset(self.inputs["wav"][start : start + num]),
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             shuffle=False,

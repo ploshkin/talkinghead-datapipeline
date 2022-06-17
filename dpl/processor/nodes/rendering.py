@@ -109,9 +109,9 @@ class RenderingNode(BaseNode):
                 self.resource.albedo[:batch_size],
                 batch["light"].to(self.resource.device),
             )
-            for key in self.__class__.output_keys:
-                name = RenderingNode.NAME_MAPPING[key]
-                render_lists[key].extend(map(util.to_image, renders[name]))
+            for dt in self.output_types:
+                name = RenderingNode.NAME_MAPPING[dt.key]
+                render_lists[dt.key].extend(map(util.to_image, renders[name]))
 
         return render_lists
 
@@ -125,12 +125,12 @@ class RenderingNode(BaseNode):
             with Parallel(n_jobs=self.num_jobs) as parallel:
                 parallel(
                     delayed(io.imsave)(
-                        output_dir / f"{i:06d}.jpg",
-                        renders[key][i],
+                        output_dir / f"{index:06d}.jpg",
+                        renders[key][index],
                         plugin="pil",
                         quality=95,
                     )
-                    for i in range(len(renders[key]))
+                    for index in range(len(renders[key]))
                 )
 
     def make_dataloader(self, input_paths: Dict[str, Path]) -> DataLoader:
