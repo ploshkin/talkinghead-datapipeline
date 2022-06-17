@@ -8,6 +8,7 @@ from tqdm import tqdm
 
 import dpl.common
 from dpl.processor.nodes.base import BaseNode, BaseResource
+from dpl.processor.datatype import DataType
 
 
 class CropResize:
@@ -29,8 +30,8 @@ class CropResize:
 
 
 class CropNode(BaseNode):
-    input_keys = ["images", "bboxes"]
-    output_keys = ["crops"]
+    input_types = [DataType.IMAGES, DataType.BBOXES]
+    output_types = [DataType.CROPS]
 
     def __init__(
         self,

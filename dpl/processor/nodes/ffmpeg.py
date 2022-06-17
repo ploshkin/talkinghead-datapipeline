@@ -7,6 +7,7 @@ from joblib import Parallel, delayed
 from tqdm import tqdm
 
 from dpl.processor.nodes.base import BaseNode, NodeExecReport
+from dpl.processor.datatype import DataType
 
 
 FFMPEG_CONVERT_CMD = """ffmpeg \\
@@ -33,8 +34,8 @@ def convert_video_to_images(source: Path, target: Path, ext: str = ".jpg") -> No
 
 
 class FfmpegBaseNode(BaseNode):
-    input_keys = []
-    output_keys = []
+    input_types = []
+    output_types = []
 
     def __init__(self, num_jobs: int = 32) -> None:
         super().__init__()
@@ -51,8 +52,8 @@ class FfmpegBaseNode(BaseNode):
 
         report = NodeExecReport.no_information(name, total=len(self))
 
-        input_key = self.__class__.input_keys[0]
-        output_key = self.__class__.output_keys[0]
+        input_key = self.input_types[0].key
+        output_key = self.output_types[0].key
         iterator = zip(self.inputs[input_key], self.outputs[output_key])
         if verbose:
             iterator = tqdm(iterator, desc=name, total=len(self))
@@ -68,14 +69,12 @@ class FfmpegBaseNode(BaseNode):
         return convert
 
     def is_base(self) -> bool:
-        return not bool(self.__class__.input_keys) and not bool(
-            self.__class__.output_keys
-        )
+        return not bool(self.input_types) and not bool(self.output_types)
 
 
 class VideoToImagesNode(FfmpegBaseNode):
-    input_keys = ["video"]
-    output_keys = ["images"]
+    input_types = [DataType.VIDEO]
+    output_types = [DataType.IMAGES]
 
     def __init__(self, ext: str = ".jpg", num_jobs: int = 32) -> None:
         super().__init__(num_jobs)
@@ -92,10 +91,10 @@ class VideoToImagesNode(FfmpegBaseNode):
 
 
 class VideoToWavNode(FfmpegBaseNode):
-    input_keys = ["video"]
-    output_keys = ["wav"]
+    input_types = [DataType.VIDEO]
+    output_types = [DataType.WAV]
 
 
 class AacToWavNode(FfmpegBaseNode):
-    input_keys = ["aac"]
-    output_keys = ["wav"]
+    input_types = [DataType.AAC]
+    output_types = [DataType.WAV]

@@ -9,6 +9,7 @@ from torch.utils.data import DataLoader
 import dpl.emoca
 import dpl.common
 from dpl.processor.nodes.base import BaseNode, BaseResource
+from dpl.processor.datatype import DataType
 
 
 class EmocaResource(BaseResource):
@@ -31,8 +32,15 @@ class EmocaResource(BaseResource):
 
 
 class EmocaNode(BaseNode):
-    input_keys = ["crops"]
-    output_keys = ["shape", "tex", "exp", "pose", "cam", "light"]
+    input_types = [DataType.CROPS]
+    output_types = [
+        DataType.SHAPE,
+        DataType.TEX,
+        DataType.EXP,
+        DataType.POSE,
+        DataType.CAM,
+        DataType.LIGHT,
+    ]
 
     def __init__(
         self,
@@ -89,8 +97,8 @@ class EmocaNode(BaseNode):
 
 
 class EmocaFromImagesNode(EmocaNode):
-    input_keys = ["images", "bboxes"]
-    output_keys = ["shape", "tex", "exp", "pose", "cam", "light"]
+    input_types = [DataType.IMAGES, DataType.BBOXES]
+    # output_types the same as in EmocaNode
 
     def make_dataloader(self, input_paths: Dict[str, Path]) -> DataLoader:
         return DataLoader(

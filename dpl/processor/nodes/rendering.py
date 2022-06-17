@@ -9,6 +9,7 @@ import torch
 from torch.utils.data import DataLoader
 
 from dpl.processor.nodes.base import BaseNode, BaseResource
+from dpl.processor.datatype import DataType
 from dpl.rendering import utils as util
 import dpl.common
 
@@ -52,14 +53,12 @@ class RenderingResource(BaseResource):
 
 
 class RenderingNode(BaseNode):
-    input_keys = ["verts", "cam", "light"]
-    output_keys = ["render_normal", "render_uv"]
+    input_types = [DataType.VERTS, DataType.CAM, DataType.LIGHT]
+    output_types = [DataType.RENDER_NORMAL, DataType.RENDER_UV]
 
     NAME_MAPPING = {
-        "render_uv": "images",
-        "render_normal": "normal_images",
-        "render_albedo": "albedo_images",
-        "render_shading": "shading_images",
+        DataType.RENDER_UV.key: "images",
+        DataType.RENDER_NORMAL.key: "normal_images",
     }
 
     def __init__(

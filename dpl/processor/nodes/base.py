@@ -6,6 +6,7 @@ from typing import Dict, List, Tuple, Optional
 from tqdm import tqdm
 
 from dpl.processor.nodes.registry import NodeRegistry
+from dpl.processor.datatype import DataType
 
 
 @dataclass
@@ -44,8 +45,8 @@ class EmptyResource(BaseResource):
 
 
 class BaseNode(metaclass=NodeRegistry):
-    input_keys: List[str] = []
-    output_keys: List[str] = []
+    input_types: List[DataType] = []
+    output_types: List[DataType] = []
 
     def __init__(self) -> None:
         self.inputs = None
@@ -114,7 +115,7 @@ class BaseNode(metaclass=NodeRegistry):
         self._check_num_paths(inputs)
         missing, extra = self._get_missing_and_extra(
             inputs,
-            self.__class__.input_keys,
+            self.input_types,
         )
         if missing:
             raise RuntimeError(f"These inputs are missing: {missing}")
@@ -123,7 +124,7 @@ class BaseNode(metaclass=NodeRegistry):
         self._check_num_paths(outputs)
         missing, extra = self._get_missing_and_extra(
             outputs,
-            self.__class__.output_keys,
+            self.output_types,
         )
         if missing:
             raise RuntimeError(f"These inputs are missing: {missing}")
@@ -142,10 +143,10 @@ class BaseNode(metaclass=NodeRegistry):
     def _get_missing_and_extra(
         self,
         inputs_or_outputs: Dict[str, List[Path]],
-        expected_keys: List[str],
+        expected_types: List[DataType],
     ) -> Tuple[List[str], List[str]]:
         keys = set(inputs_or_outputs.keys())
-        expected_keys = set(expected_keys)
+        expected_keys = set(dt.key for dt in expected_types)
 
         extra = list(keys - expected_keys)
         missing = list(expected_keys - keys)

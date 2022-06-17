@@ -6,6 +6,7 @@ import torch
 from torch.utils.data import DataLoader
 
 from dpl.processor.nodes.base import BaseNode, BaseResource
+from dpl.processor.datatype import DataType
 import dpl.flame
 import dpl.common
 
@@ -44,8 +45,8 @@ class FlameResource(BaseResource):
 
 
 class FlameNode(BaseNode):
-    input_keys = ["shape", "exp", "pose"]
-    output_keys = ["verts"]
+    input_types = [DataType.SHAPE, DataType.EXP, DataType.POSE]
+    output_types = [DataType.VERTS]
 
     def __init__(
         self,

@@ -6,6 +6,7 @@ import numpy as np
 from torch.utils.data import DataLoader
 
 from dpl.processor.nodes.base import BaseNode, BaseResource
+from dpl.processor.datatype import DataType
 import dpl.common
 
 
@@ -48,8 +49,8 @@ class FaceAlignmentResource(BaseResource):
 
 
 class FaceDetectionNode(BaseNode):
-    input_keys = ["images"]
-    output_keys = ["raw_bboxes"]
+    input_types = [DataType.IMAGES]
+    output_types = [DataType.RAW_BBOXES]
 
     def __init__(
         self,
@@ -103,8 +104,8 @@ class FaceDetectionNode(BaseNode):
 
 
 class FaceAlignmentNode(FaceDetectionNode):
-    input_keys = ["images"]
-    output_keys = ["landmarks", "raw_bboxes"]
+    # input_types the same as in FaceDetectionNode.
+    output_types = [DataType.LANDMARKS, DataType.RAW_BBOXES]
 
     def __init__(self, batch_size: int, num_workers: int, device: str) -> None:
         super().__init__()

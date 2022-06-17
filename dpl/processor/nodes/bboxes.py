@@ -4,12 +4,13 @@ from typing import Dict
 import numpy as np
 
 from dpl.processor.nodes.base import BaseNode
+from dpl.processor.datatype import DataType
 import dpl.processor.utils as util
 
 
 class TransformRawBboxesNode(BaseNode):
-    input_keys = ["raw_bboxes"]
-    output_keys = ["bboxes"]
+    input_types = [DataType.RAW_BBOXES]
+    output_types = [DataType.BBOXES]
 
     def __init__(self, extend_factor: float) -> None:
         super().__init__()

@@ -7,6 +7,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from dpl.processor.nodes.base import BaseNode, BaseResource, NodeExecReport
+from dpl.processor.datatype import DataType
 import dpl.wav2vec
 import dpl.common
 
@@ -28,8 +29,8 @@ class Wav2vecResource(BaseResource):
 
 
 class Wav2vecNode(BaseNode):
-    input_keys = ["wav"]
-    output_keys = ["wav2vec", "volume"]
+    input_types = [DataType.WAV]
+    output_types = [DataType.WAV2VEC, DataType.VOLUME]
 
     def __init__(
         self,
