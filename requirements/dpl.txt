@@ -1,0 +1,9 @@
+wheel
+numpy
+scikit-image
+imageio
+opencv-python
+fvcore
+chumpy
+joblib
+librosa
