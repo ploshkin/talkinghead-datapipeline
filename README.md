@@ -65,8 +65,5 @@ Save the graph and inputs to JSON-files
 $ python run.py \
     --graph "path/to/graph/file.json" \
     --inputs "path/to/inputs/file.json" \
-    # Root to output
-    --cache_dir "path/to/output/root" \
-    # Execution report will be generated after run and saved here
-    --report_path "path/to/report.json"
+    --output_dir "path/to/output/root"
 ```

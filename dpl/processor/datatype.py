@@ -59,7 +59,7 @@ class FolderType(BaseType):
 class DataType(Enum):
     VIDEO = BaseType(".mp4")
     WAV = BaseType(".wav")
-    AAC = BaseType(".a4c")
+    AAC = BaseType(".m4a")
     IMAGES = FolderType([".jpg", ".png"])
     CROPS = FolderType([".jpg", ".png"])
     RENDER_NORMAL = FolderType([".jpg", ".png"])

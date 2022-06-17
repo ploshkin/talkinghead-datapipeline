@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -7,9 +8,20 @@ import torch
 from torch.utils.data import Dataset
 
 
-def listdir(path: Path, ext: Optional[List[str]] = None) -> List[Path]:
+def listdir(
+    path: Path, ext: Optional[List[str]] = None, recursive: bool = False
+) -> List[Path]:
+    if recursive:
+        paths = []
+        for current_dir, _, files in os.walk(path):
+            for file in files:
+                if any(file.endswith(ext_) for ext_ in ext):
+                    paths.append(Path(current_dir, file))
+        return sorted(paths)
+
     if ext is not None:
-        return sorted((p for p in path.iterdir() if p.suffix in ext))
+        return sorted(p for p in path.iterdir() if p.suffix in ext)
+
     return sorted(path.iterdir())
 
 
