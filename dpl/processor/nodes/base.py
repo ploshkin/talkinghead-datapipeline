@@ -78,15 +78,26 @@ class BaseNode(metaclass=NodeRegistry):
         self.outputs = outputs
 
     def __call__(
-        self, verbose: bool = False, chunk_size: Optional[int] = None
+        self,
+        verbose: bool = False,
+        chunk_size: Optional[int] = None,
+        test_run: bool = True,
     ) -> NodeExecReport:
         name = self.__class__.__name__
         if not self.is_initialized():
             raise RuntimeError(f"Node {name!r} is not initialized.")
 
-        report = self.run_sequence(0, len(self), verbose)
+        first = 0
+        if test_run:
+            yield self.run_sequence(first, 1, verbose)
+            first = 1
 
-        return report
+        if chunk_size is not None:
+            for start in range(first, len(self), chunk_size):
+                num = min(chunk_size, len(self) - start)
+                yield self.run_sequence(start, num, verbose)
+        else:
+            yield self.run_sequence(first, len(self) - first, verbose)
 
     def __len__(self) -> int:
         return self._length

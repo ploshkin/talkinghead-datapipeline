@@ -2,7 +2,7 @@ import collections
 import itertools
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from dpl.processor.nodes import get_node_classes
 from dpl.processor.nodes.base import BaseNode, NodeExecReport
@@ -10,13 +10,8 @@ from dpl.processor.datatype import DataType
 
 
 class Engine:
-    def __init__(
-        self,
-        cache_dir: Path,
-        verbose: bool = False,
-    ) -> None:
+    def __init__(self, cache_dir: Path) -> None:
         self.cache_dir = cache_dir
-        self.verbose = verbose
         self._nodes = None
 
     @classmethod
@@ -24,7 +19,7 @@ class Engine:
         with open(path) as ifile:
             config = json.load(ifile)
 
-        engine = cls(config["cache_dir"], config["verbose"])
+        engine = cls(config["cache_dir"])
         node_params = [(node["name"], node["params"]) for node in config["nodes"]]
         engine.set_nodes(node_params)
         return engine
@@ -44,11 +39,26 @@ class Engine:
             _outputs = self._make_paths(names, _cls.output_types)
             node.init(_inputs, _outputs)
 
-    def execute(self) -> List[NodeExecReport]:
+    def execute(
+        self,
+        verbose: bool = False,
+        chunk_size: Optional[int] = None,
+        test_run: bool = True,
+    ) -> List[NodeExecReport]:
         if not self.is_initialized():
             raise RuntimeError("One or more nodes are not initialized yet.")
 
-        reports = [node(self.verbose) for node in self._nodes]
+        reports = []
+        generators = [node(verbose, chunk_size, test_run) for node in self._nodes]
+        try:
+            while True:
+                for gen in generators:
+                    report = next(gen)
+                    reports.append(report)
+
+        except StopIteration:
+            pass
+
         return reports
 
     def _make_paths(
