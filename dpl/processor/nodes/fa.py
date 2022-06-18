@@ -20,7 +20,7 @@ def get_bbox_score(bbox: np.ndarray) -> float:
 
 
 def get_bbox(bboxes: List[np.ndarray]) -> np.ndarray:
-    if len(bboxes) == 0:
+    if not bboxes:
         return nan_array(5)
     return max(bboxes, key=get_bbox_score)
 
