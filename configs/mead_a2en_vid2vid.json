@@ -23,8 +23,8 @@
     "params": {
       "filter_threshold": 0.9,
       "device": "cuda:1",
-      "batch_size": 16,
-      "num_workers": 4
+      "batch_size": 8,
+      "num_workers": 2
     }
   },
   {
