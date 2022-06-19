@@ -14,8 +14,6 @@ class AudioFeatureExtractor:
         self,
         checkpoint: str = "facebook/wav2vec2-base",
         device: str = "cuda",
-        *,
-        fps: Optional[int] = None,
     ) -> None:
         self.device = torch.device(device)
 
@@ -24,7 +22,6 @@ class AudioFeatureExtractor:
         self.model.eval()
 
         self.processor = Wav2Vec2Processor.from_pretrained(checkpoint)
-        self.fps = fps or AudioFeatureExtractor.FPS
 
     def encode(
         self,
@@ -51,7 +48,7 @@ class AudioFeatureExtractor:
             raise TypeError("'waveforms' should be list of np.ndarray")
 
         # Some magic.
-        lengths = [int(len(wf) * self.fps / sample_rate - 0.25) for wf in waveforms]
+        lengths = [int(len(wf) * self.FPS / sample_rate - 0.25) for wf in waveforms]
 
         features = self._encode(waveforms, sample_rate)
         features = [y[:length] for y, length in zip(features, lengths)]
@@ -82,7 +79,7 @@ class AudioFeatureExtractor:
             return np.array([])
 
         amplitude = np.abs(waveform)
-        samples_per_frame = int(np.floor(sample_rate / self.fps))
+        samples_per_frame = int(np.floor(sample_rate / self.FPS))
         mean_amplitude = [
             np.mean(amplitude[index : index + samples_per_frame])
             for index in range(0, len(amplitude), samples_per_frame)

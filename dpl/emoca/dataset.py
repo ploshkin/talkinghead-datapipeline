@@ -10,16 +10,17 @@ from dpl.common import ImageFolderDataset
 
 
 class EmocaDataset(ImageFolderDataset):
+
+    SIZE_HW = (224, 224)
+
     def __init__(
         self,
         images_dir: Path,
         bboxes_path: Path,
         ext: str = ".jpg",
-        size_hw: Tuple[int, int] = (224, 224),
         extend_factor: float = 0.2,
     ) -> None:
         super().__init__(images_dir, ext)
-        self.size_hw = size_hw
         self.bboxes = np.load(bboxes_path)
 
         if len(self) != len(self.bboxes):
@@ -32,7 +33,7 @@ class EmocaDataset(ImageFolderDataset):
         image = Image.open(self.paths[index])
         image_array = np.array(
             image.crop(self.bboxes[index][:4]).resize(
-                self.size_hw, Image.Resampling.LANCZOS
+                self.SIZE_HW, Image.Resampling.LANCZOS
             ),
             dtype=np.float32,
         )
