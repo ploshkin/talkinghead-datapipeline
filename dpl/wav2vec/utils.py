@@ -2,7 +2,7 @@ import numpy as np
 import scipy.interpolate as interpolate
 
 
-def resample(y: np.ndarray, num: int, source_fps: int) -> np.ndarray:
+def resample(y: np.ndarray, num: int, source_fps: float) -> np.ndarray:
     length_sec = len(y) / source_fps
     target_fps = num / length_sec
 

@@ -76,6 +76,7 @@ class DataType(Enum):
     VERTS = NumpyFileType()
     WAV2VEC = NumpyFileType()
     VOLUME = NumpyFileType()
+    A2EN = BaseType(".npz")
 
     def __init__(self, data_type: BaseType) -> None:
         self.key = self.name.lower()

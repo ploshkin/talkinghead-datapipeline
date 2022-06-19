@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
+import cv2
 import numpy as np
 import skimage.io as io
 import skimage.transform as transform
@@ -24,6 +25,11 @@ def listdir(
         return sorted(p for p in path.iterdir() if p.suffix in ext)
 
     return sorted(path.iterdir())
+
+
+def get_fps(path: Path) -> float:
+    video = cv2.VideoCapture(str(path))
+    return video.get(cv2.CAP_PROP_FPS)
 
 
 class ImageFolderDataset(Dataset):
