@@ -67,3 +67,15 @@ $ python run.py \
     --inputs "path/to/inputs/file.json" \
     --output_dir "path/to/output/root"
 ```
+
+## Backlog
+* [ ] Continue after restart
+* [ ] Better logging
+* [ ] Better error handling
+* [ ] Parallel over GPUs
+* [ ] Nodes for visualizations
+* [ ] Nodes for packing datasets into containers (like H5)
+* [ ] Parametrizable image format: support JPEG and PNG
+* [ ] Post-check output shapes for Numpy datatypes
+* [ ] Support filtering input paths
+* [ ] Datatypes with multiple allowed extensions: listdir outputs files matched to ALL extensions, but that's not desirable
