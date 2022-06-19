@@ -79,3 +79,6 @@ $ python run.py \
 * [ ] Post-check output shapes for Numpy datatypes
 * [ ] Support filtering input paths
 * [ ] Datatypes with multiple allowed extensions: listdir outputs files matched to ALL extensions, but that's not desirable
+* [ ] Mypy and format pre-commit check
+* [ ] Tests
+* [ ] Dockerize
