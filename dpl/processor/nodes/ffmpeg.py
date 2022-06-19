@@ -15,7 +15,7 @@ FFMPEG_CONVERT_CMD = """ffmpeg \\
 -i {source} {target} -y"""
 
 
-FFMPEG_TO_IMG_CMD = """ffmpeg \\
+FFMPEG_TO_IMG_CMD = """< /dev/null ffmpeg \\
 -hide_banner -loglevel panic -nostats \\
 -i {source} -start_number 0 -qscale:v 3 \\
 {target}/%6d{ext} -y"""
@@ -64,7 +64,6 @@ class FfmpegBaseNode(BaseNode):
         return report
 
     def get_convert_fn(self) -> Callable[[Path, Path], None]:
-        global convert
         return convert
 
     def is_base(self) -> bool:
@@ -81,7 +80,6 @@ class VideoToImagesNode(FfmpegBaseNode):
 
     def get_convert_fn(self) -> Callable[[Path, Path], None]:
         ext = self.ext
-        global convert_video_to_images
 
         def convert_fn(source: Path, target: Path) -> None:
             convert_video_to_images(source, target, ext)

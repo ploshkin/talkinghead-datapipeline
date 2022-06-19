@@ -55,7 +55,7 @@ class Wav2vecNode(BaseNode):
             dataloader = tqdm(dataloader, desc=name, total=len(dataloader))
 
         with self.resource:
-            global_index = 0
+            global_index = start
             for batch in dataloader:
                 batch_size = len(batch)
                 try:

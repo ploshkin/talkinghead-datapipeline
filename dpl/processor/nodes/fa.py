@@ -79,9 +79,7 @@ class FaceDetectionNode(BaseNode):
 
         bboxes = []
         for images in dataloader:
-            bboxes_batch = self.resource.fa.face_detector.detect_from_batch(
-                images.to(self.resource.device),
-            )
+            bboxes_batch = self.resource.fa.face_detector.detect_from_batch(images)
             bboxes.extend(map(get_bbox, bboxes_batch))
 
         return np.stack(bboxes)

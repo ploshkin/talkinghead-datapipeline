@@ -78,7 +78,7 @@ class AudioFeatureExtractor:
     def _compute_audio_volume(
         self, waveform: np.ndarray, sample_rate: int
     ) -> np.ndarray:
-        if wafeform.size == 0:
+        if waveform.size == 0:
             return np.array([])
 
         amplitude = np.abs(waveform)

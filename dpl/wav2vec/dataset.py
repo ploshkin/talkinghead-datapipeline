@@ -20,7 +20,9 @@ class WavDataset(Dataset):
 
     def __getitem__(self, index: int) -> np.ndarray:
         path = self.paths[index]
-        waveform, _ = librosa.load(path, sr=self.sample_rate, mono=True)
+        waveform, sr = librosa.load(path, sr=None, mono=True)
+        if waveform.size:
+            waveform = librosa.resample(waveform, orig_sr=sr, target_sr=self.sample_rate)
         return waveform
 
     def __len__(self) -> int:
