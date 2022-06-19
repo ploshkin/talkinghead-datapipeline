@@ -22,7 +22,9 @@ class WavDataset(Dataset):
         path = self.paths[index]
         waveform, sr = librosa.load(path, sr=None, mono=True)
         if waveform.size:
-            waveform = librosa.resample(waveform, orig_sr=sr, target_sr=self.sample_rate)
+            waveform = librosa.resample(
+                waveform, orig_sr=sr, target_sr=self.sample_rate
+            )
         return waveform
 
     def __len__(self) -> int:

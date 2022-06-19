@@ -11,7 +11,9 @@ from dpl import common
 
 
 class Engine:
-    def __init__(self, nodes: Union[Path, List[Dict[str, Any]]], output_dir: Path) -> None:
+    def __init__(
+        self, nodes: Union[Path, List[Dict[str, Any]]], output_dir: Path
+    ) -> None:
         self._set_nodes(nodes)
         self.output_dir = output_dir
 
@@ -19,7 +21,9 @@ class Engine:
         data_types = {dt.key: dt for dt in DataType}
         paths = {
             key: common.listdir(
-                path, ext=data_types[key].extensions(), recursive=True,
+                path,
+                ext=data_types[key].extensions(),
+                recursive=True,
             )
             for key, path in inputs.items()
         }
