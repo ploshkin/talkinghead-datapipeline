@@ -14,8 +14,8 @@ class A2enDatasetNode(BaseNode):
         DataType.VIDEO,
         DataType.WAV2VEC,
         DataType.VOLUME,
-        DataType.VERTS,
         DataType.EXP,
+        DataType.POSE,
     ]
     output_types = [DataType.A2EN]
 
@@ -26,14 +26,15 @@ class A2enDatasetNode(BaseNode):
     ) -> None:
         data = {
             key: np.load(input_paths[key])
-            for key in ["wav2vec", "volume", "verts", "exp"]
+            for key in ["wav2vec", "volume", "exp"]
         }
+        data["jaw"] = np.load(input_paths["pose"])[:, 3]
 
         fps = common.get_fps(input_paths["video"])
+        num = len(data["exp"])
 
-        num = len(data["verts"])
-        if len(data["exp"]) != num:
-            raise RuntimeError
+        if not data["volume"].size or not data["wav2vec"].size:
+            raise RuntimeError("Audio is empty")
 
         data["volume"] = util.resample(data["volume"], num=num, source_fps=fps)
         data["wav2vec"] = util.resample(data["wav2vec"], num=num, source_fps=fps)
