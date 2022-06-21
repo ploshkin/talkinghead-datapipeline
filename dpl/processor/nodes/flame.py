@@ -89,7 +89,7 @@ class FlameNode(BaseNode):
             )
             batches["landmarks3d"].append(landmarks3d.detach().cpu().numpy())
             batches["verts"].append(verts.detach().cpu().numpy())
-        return {key: np.concatenate(batched_values) for key, batched_values in batches}
+        return {key: np.concatenate(arrays) for key, arrays in batches.items()}
 
     def save_outputs(
         self, outputs: Dict[str, np.ndarray], paths: Dict[str, Path]
