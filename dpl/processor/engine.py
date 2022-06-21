@@ -33,6 +33,8 @@ class Engine:
             _inputs = self._make_paths(names, _cls.input_types)
             for key in _inputs:
                 if key in inputs:
+                    if not inputs[key].exists():
+                        raise RuntimeError(f"Input path {inputs[key]!r} doesn't exist")
                     _inputs[key] = paths[key][:]
             _outputs = self._make_paths(names, _cls.output_types)
             node.init(_inputs, _outputs)
