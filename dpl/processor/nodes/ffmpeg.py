@@ -55,7 +55,8 @@ class FfmpegBaseNode(BaseNode):
             self.outputs[output_key][start : start + num],
         )
         if verbose:
-            iterator = tqdm(iterator, desc=name, total=num)
+            desc = self.get_description(start, num)
+            iterator = tqdm(iterator, desc=desc, total=num)
 
         convert_fn = self.get_convert_fn()
         with Parallel(n_jobs=self.num_jobs, prefer="processes") as parallel:

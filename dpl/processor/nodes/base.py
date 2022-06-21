@@ -77,6 +77,8 @@ class BaseNode(metaclass=NodeRegistry):
         self.inputs = inputs
         self.outputs = outputs
 
+        self._num_chars = self._get_max_classname_len()
+
     def __call__(
         self,
         verbose: bool = False,
@@ -107,7 +109,8 @@ class BaseNode(metaclass=NodeRegistry):
         report = NodeExecReport(name, start, num)
         iterator = range(start, start + num)
         if verbose:
-            iterator = tqdm(iterator, desc=name, total=num)
+            desc = self.get_description(start, num)
+            iterator = tqdm(iterator, desc=desc, total=num)
 
         with self.resource:
             for index in iterator:
@@ -134,6 +137,16 @@ class BaseNode(metaclass=NodeRegistry):
 
     def is_initialized(self) -> bool:
         return self.inputs is not None and self.outputs is not None
+
+    def check_inputs_exist(self, input_paths: Dict[str, Path]) -> bool:
+        for key, path in input_paths.items():
+            if not path.exists():
+                return False
+        return True
+
+    def get_description(self, start: int, num: int) -> str:
+        template = f"{{name:{self._num_chars + 1}}} [{start: 4d} / {len(self)}]"
+        return template.format(name=f"{self.__class__.__name__}:")
 
     def _check_inputs(self, inputs: Dict[str, List[Path]]) -> None:
         self._check_num_paths(inputs)
@@ -170,8 +183,6 @@ class BaseNode(metaclass=NodeRegistry):
         missing = list(expected_keys - keys)
         return missing, extra
 
-    def check_inputs_exist(self, input_paths: Dict[str, Path]) -> bool:
-        for key, path in input_paths.items():
-            if not path.exists():
-                return False
-        return True
+    def _get_max_classname_len(self) -> int:
+        classnames = self.__class__.get_registry().keys()
+        return max(map(len, classnames))

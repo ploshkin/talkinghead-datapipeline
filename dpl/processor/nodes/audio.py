@@ -52,7 +52,8 @@ class Wav2vecNode(BaseNode):
         sample_rate = dataloader.dataset.sample_rate
 
         if verbose:
-            dataloader = tqdm(dataloader, desc=name, total=len(dataloader))
+            desc = self.get_description(start, num)
+            dataloader = tqdm(dataloader, desc=desc, total=len(dataloader))
 
         with self.resource:
             global_index = start
