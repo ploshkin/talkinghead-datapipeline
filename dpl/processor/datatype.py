@@ -92,3 +92,6 @@ class DataType(Enum):
 
     def extensions(self) -> List[str]:
         return list(self._data_type._exts)
+
+    def is_sequential(self) -> bool:
+        return self._data_type.is_sequential()

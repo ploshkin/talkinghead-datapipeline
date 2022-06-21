@@ -35,7 +35,7 @@ class Vid2vidDatasetNode(BaseNode):
         input_paths: Dict[str, Path],
         output_paths: Dict[str, Path],
     ) -> None:
-        output_paths["a2en"].parent.mkdir(parents=True, exist_ok=True)
+        output_paths["vid2vid"].parent.mkdir(parents=True, exist_ok=True)
         with h5py.File(output_paths["vid2vid"], "w") as h5_file:
             for dt in self.input_types:
                 if dt.is_sequential():
@@ -57,7 +57,7 @@ class Vid2vidDatasetNode(BaseNode):
         fd.create_dataset(
             key,
             data=array,
-            chunks=(1, *array.shape),
+            chunks=(1, *array.shape[1:]),
             compression=HDF5_JPEG_PLUGIN,
             compression_opts=(self.quality, width, height, rgb_flag),
         )
