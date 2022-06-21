@@ -145,7 +145,8 @@ class BaseNode(metaclass=NodeRegistry):
         return True
 
     def get_description(self, start: int, num: int) -> str:
-        template = f"{{name:{self._num_chars + 1}}} [{start: 4d} / {len(self)}]"
+        progress = start / len(self) * 100
+        template = f"{{name:{self._num_chars + 1}}} [{progress:5.1f}%]"
         return template.format(name=f"{self.__class__.__name__}:")
 
     def _check_inputs(self, inputs: Dict[str, List[Path]]) -> None:
