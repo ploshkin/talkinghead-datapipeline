@@ -7,3 +7,5 @@ fvcore
 chumpy
 joblib
 librosa
+wandb
+h5py

@@ -67,6 +67,7 @@ class DataType(Enum):
     RAW_BBOXES = NumpyFileType()
     BBOXES = NumpyFileType()
     LANDMARKS = NumpyFileType()
+    LANDMARKS3D = NumpyFileType()
     SHAPE = NumpyFileType()
     TEX = NumpyFileType()
     EXP = NumpyFileType()
@@ -77,6 +78,7 @@ class DataType(Enum):
     WAV2VEC = NumpyFileType()
     VOLUME = NumpyFileType()
     A2EN = BaseType(".npz")
+    VID2VID = BaseType(".h5")
 
     def __init__(self, data_type: BaseType) -> None:
         self.key = self.name.lower()

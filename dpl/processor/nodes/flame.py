@@ -1,3 +1,4 @@
+import collections
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -46,7 +47,7 @@ class FlameResource(BaseResource):
 
 class FlameNode(BaseNode):
     input_types = [DataType.SHAPE, DataType.EXP, DataType.POSE]
-    output_types = [DataType.VERTS]
+    output_types = [DataType.VERTS, DataType.LANDMARKS3D]
 
     def __init__(
         self,
@@ -74,21 +75,28 @@ class FlameNode(BaseNode):
         input_paths: Dict[str, Path],
         output_paths: Dict[str, Path],
     ) -> None:
-        verts = self.decode_flame(input_paths)
-        output_paths["verts"].parent.mkdir(parents=True, exist_ok=True)
-        np.save(output_paths["verts"], verts)
+        outputs = self.decode_flame(input_paths)
+        self.save_outputs(outputs, output_paths)
 
-    def decode_flame(self, input_paths: Dict[str, Path]) -> np.ndarray:
-        batched_verts = []
+    def decode_flame(self, input_paths: Dict[str, Path]) -> Dict[str, np.ndarray]:
+        batches = collections.defaultdict(list)
         dataloader = self.make_dataloader(input_paths)
         for index, batch in enumerate(dataloader):
-            verts, _, _ = self.resource.model(
+            verts, _, landmarks3d = self.resource.model(
                 shape_params=batch["shape"].to(self.resource.device),
                 expression_params=batch["exp"].to(self.resource.device),
                 pose_params=batch["pose"].to(self.resource.device),
             )
-            batched_verts.append(verts.detach().cpu().numpy())
-        return np.concatenate(batched_verts)
+            batches["landmarks3d"].append(landmarks3d.detach().cpu().numpy())
+            batches["verts"].append(verts.detach().cpu().numpy())
+        return {key: np.concatenate(batched_values) for key, batched_values in batches}
+
+    def save_outputs(
+        self, outputs: Dict[str, np.ndarray], paths: Dict[str, Path]
+    ) -> None:
+        for key, path in paths.items():
+            path.parent.mkdir(parents=True, exist_ok=True)
+            np.save(path, outputs[key])
 
     def make_dataloader(self, input_paths: Dict[str, Path]) -> DataLoader:
         return DataLoader(

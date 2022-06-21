@@ -24,10 +24,7 @@ class A2enDatasetNode(BaseNode):
         input_paths: Dict[str, Path],
         output_paths: Dict[str, Path],
     ) -> None:
-        data = {
-            key: np.load(input_paths[key])
-            for key in ["wav2vec", "volume", "exp"]
-        }
+        data = {key: np.load(input_paths[key]) for key in ["wav2vec", "volume", "exp"]}
         data["jaw"] = np.load(input_paths["pose"])[:, 3]
 
         fps = common.get_fps(input_paths["video"])
