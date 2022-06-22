@@ -12,5 +12,7 @@ def resample(y: np.ndarray, num: int, source_fps: float) -> np.ndarray:
     x = np.linspace(dx, length_sec, len(y))
     x_hat = np.linspace(dx_hat, length_sec, num)
 
-    interp_fn = interpolate.interp1d(x, y, axis=0, assume_sorted=True)
+    interp_fn = interpolate.interp1d(
+        x, y, axis=0, assume_sorted=True, fill_value="extrapolate"
+    )
     return interp_fn(x_hat)
