@@ -18,17 +18,20 @@ class Engine:
         self.output_dir = output_dir
 
     def init(self, inputs: Dict[str, Path]) -> None:
-        data_types = {dt.key: dt for dt in DataType}
+        dts = {dt.key: dt for dt in DataType}
         paths = {
             key: common.listdir(
                 path,
-                ext=data_types[key].extensions(),
-                recursive=True,
+                ext=None if dts[key].is_sequential() else dts[key].extensions(),
+                recursive=False if dts[key].is_sequential() else True,
             )
             for key, path in inputs.items()
         }
         input_names = self._deduce_names(inputs, paths)
         name_set = self._get_name_set(input_names)
+        if not name_set:
+            raise RuntimeError("No intersected names in given inputs.")
+
         names = sorted(name_set)
 
         for index, node in enumerate(self._nodes):
