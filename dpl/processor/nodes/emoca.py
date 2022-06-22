@@ -14,21 +14,21 @@ from dpl.processor.datatype import DataType
 
 class EmocaResource(BaseResource):
     def __init__(self, weights_path: Path, device: str) -> None:
+        super().__init__()
         self.weights_path = weights_path
         self.device = torch.device(device)
-        self.reset()
 
-    def __enter__(self) -> "EmocaResource":
+    def load(self) -> None:
         model = dpl.emoca.EmocaInferenceWrapper()
         model.load_state_dict(torch.load(self.weights_path))
         self.model = model.to(self.device)
         self.model.eval()
-        return self
+        super().load()
 
-    def reset(self) -> None:
-        if hasattr(self, "model"):
+    def unload(self) -> None:
+        if self.is_loaded():
             del self.model
-        self.model = None
+        super().unload()
 
 
 class EmocaNode(BaseNode):
@@ -48,8 +48,9 @@ class EmocaNode(BaseNode):
         device: str,
         batch_size: int = 4,
         num_workers: int = 4,
+        recompute: bool = False,
     ) -> None:
-        super().__init__()
+        super().__init__(recompute)
         self.resource = EmocaResource(weights_path, device)
         self.batch_size = batch_size
         self.num_workers = num_workers

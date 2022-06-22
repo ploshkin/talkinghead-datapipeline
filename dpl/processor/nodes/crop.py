@@ -40,8 +40,9 @@ class CropNode(BaseNode):
         output_ext: str = ".jpg",
         num_jobs: int = 32,
         save_kwargs: Optional[Dict[str, Any]] = None,
+        recompute: bool = False,
     ) -> None:
-        super().__init__()
+        super().__init__(recompute)
         self.cropper = CropResize(size_hw, save_kwargs=save_kwargs)
         self.input_ext = input_ext
         self.output_ext = output_ext

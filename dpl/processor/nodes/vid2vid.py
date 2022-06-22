@@ -22,8 +22,8 @@ class Vid2vidDatasetNode(BaseNode):
     ]
     output_types = [DataType.VID2VID]
 
-    def __init__(self, quality: int = 95) -> None:
-        super().__init__()
+    def __init__(self, quality: int = 95, recompute: bool = False) -> None:
+        super().__init__(recompute)
         if not self._check_jpeg_plugin_exists():
             url = "https://github.com/CARS-UChicago/jpegHDF5"
             raise RuntimeError(f"jpegHDF5 plugin not found. Install it from {url!r}")

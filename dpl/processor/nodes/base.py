@@ -1,7 +1,7 @@
 import abc
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+from typing import Any, Dict, List, Tuple, Optional
 
 from tqdm import tqdm
 
@@ -33,14 +33,29 @@ class NodeExecReport:
 
 
 class BaseResource:
+    def __init__(self) -> None:
+        self.__loaded = False
+
+    def __getattr__(self, name: str) -> Any:
+        if name != "__loaded":
+            if not self.is_loaded():
+                self.load()
+        return self.__getattribute__(name)
+
     def __enter__(self) -> "BaseResource":
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-        self.reset()
+        self.unload()
 
-    def reset(self) -> None:
-        pass
+    def is_loaded(self) -> bool:
+        return self.__loaded
+
+    def load(self) -> None:
+        self.__loaded = True
+
+    def unload(self) -> None:
+        self.__loaded = False
 
 
 class EmptyResource(BaseResource):
@@ -51,12 +66,15 @@ class BaseNode(metaclass=NodeRegistry):
     input_types: List[DataType] = []
     output_types: List[DataType] = []
 
-    def __init__(self) -> None:
+    def __init__(self, recompute: bool = False) -> None:
+        self.recompute = recompute
+
         self.inputs = None
         self.outputs = None
         self.resource = EmptyResource()
 
         self._length = 0
+        self._num_chars = self._get_max_classname_len()
 
     def init(
         self,
@@ -76,8 +94,6 @@ class BaseNode(metaclass=NodeRegistry):
 
         self.inputs = inputs
         self.outputs = outputs
-
-        self._num_chars = self._get_max_classname_len()
 
     def __call__(
         self,
@@ -117,13 +133,14 @@ class BaseNode(metaclass=NodeRegistry):
                 input_paths = {key: self.inputs[key][index] for key in self.inputs}
                 output_paths = {key: self.outputs[key][index] for key in self.outputs}
 
-                if self.check_inputs_exist(input_paths):
-                    try:
-                        self.run_single(input_paths, output_paths)
-                    except RuntimeError as err:
-                        report.add_error(input_paths, str(err))
-                else:
-                    report.add_missing(input_paths)
+                if self.recompute or not self.check_exist(output_paths):
+                    if self.check_exist(input_paths):
+                        try:
+                            self.run_single(input_paths, output_paths)
+                        except RuntimeError as err:
+                            report.add_error(input_paths, str(err))
+                    else:
+                        report.add_missing(input_paths)
 
         return report
 
@@ -138,11 +155,8 @@ class BaseNode(metaclass=NodeRegistry):
     def is_initialized(self) -> bool:
         return self.inputs is not None and self.outputs is not None
 
-    def check_inputs_exist(self, input_paths: Dict[str, Path]) -> bool:
-        for key, path in input_paths.items():
-            if not path.exists():
-                return False
-        return True
+    def check_exist(self, paths: Dict[str, Path]) -> bool:
+        return all(path.exists() for _, path in paths.items())
 
     def get_description(self, start: int, num: int) -> str:
         progress = start / len(self) * 100

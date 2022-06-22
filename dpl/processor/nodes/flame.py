@@ -21,14 +21,14 @@ class FlameResource(BaseResource):
         n_exp: int,
         device: str,
     ) -> None:
+        super().__init__()
         self.flame_model_path = flame_model_path
         self.flame_lmk_embedding_path = flame_lmk_embedding_path
         self.n_shape = n_shape
         self.n_exp = n_exp
         self.device = torch.device(device)
-        self.reset()
 
-    def __enter__(self) -> "FlameResource":
+    def load(self) -> None:
         model = dpl.flame.FLAME(
             self.flame_model_path,
             self.flame_lmk_embedding_path,
@@ -37,12 +37,12 @@ class FlameResource(BaseResource):
         )
         self.model = model.to(self.device)
         self.model.eval()
-        return self
+        super().load()
 
-    def reset(self) -> None:
-        if hasattr(self, "model"):
+    def unload(self) -> None:
+        if self.is_loaded():
             del self.model
-        self.model = None
+        super().unload()
 
 
 class FlameNode(BaseNode):
@@ -58,8 +58,9 @@ class FlameNode(BaseNode):
         n_exp: int = 50,
         batch_size: int = 40,
         num_workers: int = 4,
+        recompute: bool = False,
     ) -> None:
-        super().__init__()
+        super().__init__(recompute)
         self.resource = FlameResource(
             flame_model_path,
             flame_lmk_embedding_path,

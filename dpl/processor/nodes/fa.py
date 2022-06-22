@@ -27,11 +27,11 @@ def get_bbox(bboxes: List[np.ndarray]) -> np.ndarray:
 
 class FaceAlignmentResource(BaseResource):
     def __init__(self, filter_threshold: float, device: str) -> None:
+        super().__init__()
         self.filter_threshold = filter_threshold
         self.device = device
-        self.reset()
 
-    def __enter__(self) -> "FaceAlignmentResource":
+    def load(self) -> None:
         self.fa = face_alignment.FaceAlignment(
             face_alignment.LandmarksType._2D,
             flip_input=False,
@@ -40,12 +40,12 @@ class FaceAlignmentResource(BaseResource):
                 "filter_threshold": self.filter_threshold,
             },
         )
-        return self
+        super().load()
 
-    def reset(self) -> None:
-        if hasattr(self, "fa"):
+    def unload(self) -> None:
+        if self.is_loaded():
             del self.fa
-        self.fa = None
+        super().unload()
 
 
 class FaceDetectionNode(BaseNode):
@@ -58,8 +58,9 @@ class FaceDetectionNode(BaseNode):
         batch_size: int,
         num_workers: int,
         device: str,
+        recompute: bool = False,
     ) -> None:
-        super().__init__()
+        super().__init__(recompute)
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.resource = FaceAlignmentResource(filter_threshold, device)
@@ -104,12 +105,6 @@ class FaceDetectionNode(BaseNode):
 class FaceAlignmentNode(FaceDetectionNode):
     # input_types the same as in FaceDetectionNode.
     output_types = [DataType.LANDMARKS, DataType.RAW_BBOXES]
-
-    def __init__(self, batch_size: int, num_workers: int, device: str) -> None:
-        super().__init__()
-        self.batch_size = batch_size
-        self.num_workers = num_workers
-        self.resource = FaceAlignmentResource(device)
 
     def run_single(
         self,

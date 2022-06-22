@@ -14,18 +14,18 @@ import dpl.common
 
 class Wav2vecResource(BaseResource):
     def __init__(self, checkpoint: str, device: str) -> None:
+        super().__init__()
         self.checkpoint = checkpoint
         self.device = device
-        self.reset()
 
-    def __enter__(self) -> "Wav2vecResource":
+    def load(self) -> None:
         self.encoder = dpl.wav2vec.AudioFeatureExtractor(self.checkpoint, self.device)
-        return self
+        super().load()
 
-    def reset(self) -> None:
-        if hasattr(self, "model"):
+    def unload(self) -> None:
+        if self.is_loaded():
             del self.encoder
-        self.encoder = None
+        super().unload()
 
 
 class Wav2vecNode(BaseNode):
@@ -38,8 +38,9 @@ class Wav2vecNode(BaseNode):
         checkpoint: str = "facebook/wav2vec2-base",
         batch_size: int = 8,
         num_workers: int = 4,
+        recompute: bool = True,
     ) -> None:
-        super().__init__()
+        super().__init__(recompute)
         self.resource = Wav2vecResource(checkpoint, device)
         self.batch_size = batch_size
         self.num_workers = num_workers

@@ -37,8 +37,8 @@ class FfmpegBaseNode(BaseNode):
     input_types = []
     output_types = []
 
-    def __init__(self, num_jobs: int = 32) -> None:
-        super().__init__()
+    def __init__(self, num_jobs: int = 32, recompute: bool = False) -> None:
+        super().__init__(recompute)
         self.num_jobs = num_jobs
 
     def run_sequence(self, start: int, num: int, verbose: bool) -> NodeExecReport:
@@ -75,8 +75,10 @@ class VideoToImagesNode(FfmpegBaseNode):
     input_types = [DataType.VIDEO]
     output_types = [DataType.IMAGES]
 
-    def __init__(self, ext: str = ".jpg", num_jobs: int = 32) -> None:
-        super().__init__(num_jobs)
+    def __init__(
+        self, ext: str = ".jpg", num_jobs: int = 32, recompute: bool = False
+    ) -> None:
+        super().__init__(num_jobs, recompute)
         self.ext = ext
 
     def get_convert_fn(self) -> Callable[[Path, Path], None]:

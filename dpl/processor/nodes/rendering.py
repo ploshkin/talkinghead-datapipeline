@@ -23,15 +23,14 @@ class RenderingResource(BaseResource):
         batch_size: int,
         device: str,
     ) -> None:
+        super().__init__()
         self.head_template_path = head_template_path
         self.image_size = image_size
         self.uv_size = uv_size
         self.batch_size = batch_size
         self.device = torch.device(device)
 
-        self.reset()
-
-    def __enter__(self) -> "RenderingResource":
+    def load(self) -> None:
         model = dpl.rendering.SRenderY(
             image_size=self.image_size,
             obj_filename=self.head_template_path,
@@ -43,13 +42,13 @@ class RenderingResource(BaseResource):
             self.batch_size,
             self.device,
         )
-        return self
+        super().load()
 
-    def reset(self) -> None:
-        if hasattr(self, "model"):
+    def unload(self) -> None:
+        if self.is_loaded():
             del self.model
-        self.model = None
-        self.albedo = None
+            del self.albedo
+        super().unload()
 
 
 class RenderingNode(BaseNode):
@@ -70,8 +69,9 @@ class RenderingNode(BaseNode):
         batch_size: int = 4,
         num_workers: int = 4,
         num_save_jobs: int = 8,
+        recompute: bool = False,
     ) -> None:
-        super().__init__()
+        super().__init__(recompute)
 
         self.resource = RenderingResource(
             head_template_path,

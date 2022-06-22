@@ -12,8 +12,8 @@ class TransformRawBboxesNode(BaseNode):
     input_types = [DataType.RAW_BBOXES]
     output_types = [DataType.BBOXES]
 
-    def __init__(self, extend_factor: float) -> None:
-        super().__init__()
+    def __init__(self, extend_factor: float, recompute: bool = False) -> None:
+        super().__init__(recompute)
         self.pad = extend_factor
 
     def run_single(
