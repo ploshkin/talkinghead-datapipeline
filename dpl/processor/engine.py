@@ -2,7 +2,7 @@ import collections
 import itertools
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 from dpl.processor.nodes import get_node_classes
 from dpl.processor.nodes.base import BaseNode, NodeExecReport
@@ -27,16 +27,26 @@ class Engine:
             )
             for key, path in inputs.items()
         }
-        names = self._deduce_names(inputs, paths)
+        input_names = self._deduce_names(inputs, paths)
+        name_set = self._get_name_set(input_names)
+        names = sorted(name_set)
+
         for index, node in enumerate(self._nodes):
             _cls = node.__class__
-            _inputs = self._make_paths(names, _cls.input_types)
-            for key in _inputs:
-                if key in inputs:
-                    if not inputs[key].exists():
-                        raise RuntimeError(f"Input path {inputs[key]!r} doesn't exist")
-                    _inputs[key] = paths[key][:]
-            _outputs = self._make_paths(names, _cls.output_types)
+            _inputs = {}
+            for dt in _cls.input_types:
+                if dt.key in inputs:
+                    if not inputs[dt.key].exists():
+                        raise RuntimeError(f"Input {inputs[dt.key]!r} doesn't exist")
+                    _inputs[dt.key] = [
+                        path
+                        for name, path in zip(input_names[dt.key], paths[dt.key])
+                        if name in name_set
+                    ]
+                else:
+                    _inputs[dt.key] = self._get_paths(dt, names)
+
+            _outputs = {dt.key: self._get_paths(dt, names) for dt in _cls.output_types}
             node.init(_inputs, _outputs)
 
     def execute(
@@ -79,25 +89,19 @@ class Engine:
             nodes = json.load(ifile)
         return nodes
 
-    def _make_paths(
-        self, names: List[str], data_types: List[DataType]
-    ) -> Dict[str, List[Path]]:
-        paths: Dict[str, List[Path]] = {}
-        for dt in data_types:
-            template = dt.template()
-            paths[dt.key] = [
-                Path(template.format(root=self.output_dir, name=name)) for name in names
-            ]
-        return paths
+    def _get_paths(self, data_type: DataType, names: List[str]) -> List[Path]:
+        return [data_type.get_path(self.output_dir, name) for name in names]
+
+    def _make_name(self, path: Path, root: Path) -> str:
+        return "_".join(path.with_suffix("").relative_to(root).parts)
 
     def _deduce_names(
         self, inputs: Dict[str, Path], paths: Dict[str, List[Path]]
-    ) -> List[str]:
-        if not inputs:
-            return []
-        first_key = list(inputs.keys())[0]
-        root = inputs[first_key]
-        return [
-            "_".join(path.with_suffix("").relative_to(root).parts)
-            for path in paths[first_key]
-        ]
+    ) -> Dict[str, List[str]]:
+        return {
+            key: [self._make_name(path, root) for path in paths[key]]
+            for key, root in inputs.items()
+        }
+
+    def _get_name_set(self, names: Dict[str, List[str]]) -> Set[str]:
+        return set.intersection(*map(set, names.values()))

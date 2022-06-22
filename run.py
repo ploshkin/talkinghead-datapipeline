@@ -7,7 +7,7 @@ from dpl.processor.engine import Engine
 from dpl.processor.nodes.base import NodeExecReport
 
 DEFAULT_OUTPUT_DIR = "/data/datasets/dpl_cache"
-DEFAULT_REPORT_PATH = f"{DEFAULT_OUTPUT_DIR}/report.json"
+DEFAULT_REPORT_NAME = "report.json"
 
 
 def abs_path(path: str) -> Path:
@@ -19,7 +19,7 @@ def parse_args():
     parser.add_argument("--graph", type=abs_path, required=True)
     parser.add_argument("--inputs", type=abs_path, required=True)
     parser.add_argument("--output_dir", type=abs_path, default=DEFAULT_OUTPUT_DIR)
-    parser.add_argument("--report_path", type=abs_path, default=DEFAULT_REPORT_PATH)
+    parser.add_argument("--report_name", type=str, default=DEFAULT_REPORT_NAME)
     parser.add_argument("--verbose", type=bool, default=True)
     parser.add_argument("--chunk_size", type=int, default=50)
     parser.add_argument("--test_run", type=bool, default=True)
@@ -59,7 +59,7 @@ def main():
     inputs = read_inputs(args.inputs)
     engine.init(inputs)
     reports = engine.execute(args.verbose, args.chunk_size, args.test_run)
-    save_report(args.report_path, reports)
+    save_report(args.output_dir / args.report_name, reports)
 
 
 if __name__ == "__main__":

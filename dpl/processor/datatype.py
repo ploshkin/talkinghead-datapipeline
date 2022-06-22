@@ -1,5 +1,6 @@
 import dataclasses
 from enum import Enum
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 
@@ -86,6 +87,9 @@ class DataType(Enum):
 
     def template(self, ext: Optional[str] = None) -> str:
         return self._data_type.template(self.key, ext)
+
+    def get_path(self, root: Path, name: str, ext: Optional[str] = None) -> Path:
+        return Path(self.template(ext).format(root=root, name=name))
 
     def ffmpeg_template(self, ext: Optional[str] = None) -> str:
         return self._data_type.ffmpeg_template(self.key, ext)
