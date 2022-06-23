@@ -79,7 +79,7 @@ $ python run.py \
 * [ ] Better error handling
 * [ ] Parallel over GPUs
 * [ ] Nodes for visualizations
-* [+] Nodes for packing datasets into containers (like H5)
+* [x] Nodes for packing datasets into containers (like H5)
 * [ ] Parametrizable image format: support JPEG and PNG
 * [ ] Post-check output shapes for Numpy datatypes
 * [ ] Support filtering input paths
