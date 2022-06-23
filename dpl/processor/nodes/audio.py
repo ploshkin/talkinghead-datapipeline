@@ -6,7 +6,7 @@ import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from dpl.processor.nodes.base import BaseNode, BaseResource, NodeExecReport
+from dpl.processor.nodes.base import BaseNode, BaseResource
 from dpl.processor.datatype import DataType
 import dpl.wav2vec
 import dpl.common
@@ -44,9 +44,8 @@ class Wav2vecNode(BaseNode):
         self.batch_size = batch_size
         self.num_workers = num_workers
 
-    def run_sequence(self, start: int, num: int, verbose: bool) -> NodeExecReport:
+    def run_sequence(self, start: int, num: int, verbose: bool) -> None:
         name = self.__class__.__name__
-        report = NodeExecReport(name, start, num)
 
         indices = self._choose_indices_to_process(range(start, start + num))
         dataloader = self.make_dataloader(indices)
@@ -68,7 +67,7 @@ class Wav2vecNode(BaseNode):
                     inputs = {
                         "wav": [self.inputs["wav"][index] for index in error_indices]
                     }
-                    report.add_error(inputs, str(exc))
+                    self._report.add_error(inputs, str(exc))
 
                 else:
                     # TODO: Parallelize saving?
@@ -80,8 +79,6 @@ class Wav2vecNode(BaseNode):
                             np.save(path, value[offset])
 
                 data_index += batch_size
-
-        return report
 
     def make_dataloader(self, indices: List[int]) -> DataLoader:
         audio_paths = [self.inputs["wav"][index] for index in indices]

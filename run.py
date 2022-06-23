@@ -33,22 +33,7 @@ def read_inputs(path) -> Dict[str, Path]:
 
 
 def save_report(path: Path, reports: List[NodeExecReport]) -> None:
-    def _to_str_list(items: Optional[List[Any]]) -> List[str]:
-        if items is None:
-            return []
-        return list(map(str, items))
-
-    final_report = [
-        {
-            "name": report.name,
-            "start": report.start,
-            "total": report.total,
-            "missing_inputs": _to_str_list(report.missing_inputs),
-            "error_inputs": _to_str_list(report.error_inputs),
-            "error_messages": _to_str_list(report.error_messages),
-        }
-        for report in reports
-    ]
+    final_report = [report.to_dict() for report in reports]
     with open(path, "w") as ofile:
         json.dump(final_report, ofile, indent=2)
 

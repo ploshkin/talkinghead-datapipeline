@@ -6,7 +6,7 @@ from typing import Callable, Dict, Iterable, List
 from joblib import Parallel, delayed
 from tqdm import tqdm
 
-from dpl.processor.nodes.base import BaseNode, NodeExecReport
+from dpl.processor.nodes.base import BaseNode
 from dpl.processor.datatype import DataType
 
 
@@ -44,10 +44,9 @@ class FfmpegBaseNode(BaseNode):
         if self.__class__.__name__ != "FfmpegBaseNode":
             self.check_input_output()
 
-    def run_sequence(self, start: int, num: int, verbose: bool) -> NodeExecReport:
+    def run_sequence(self, start: int, num: int, verbose: bool) -> None:
         name = self.__class__.__name__
 
-        report = NodeExecReport.no_information(name, start, num)
         indices = self._choose_indices_to_process(range(start, start + num))
 
         input_key = self.input_types[0].key
@@ -64,8 +63,6 @@ class FfmpegBaseNode(BaseNode):
         convert_fn = self.get_convert_fn()
         with Parallel(n_jobs=self.num_jobs, prefer="processes") as parallel:
             parallel(delayed(convert_fn)(src, dst) for src, dst in iterator)
-
-        return report
 
     def get_convert_fn(self) -> Callable[[Path, Path], None]:
         return convert

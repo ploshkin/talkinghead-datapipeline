@@ -66,13 +66,12 @@ class Engine:
         try:
             while True:
                 for gen in generators:
-                    report = next(gen)
-                    reports.append(report)
+                    next(gen)
 
         except StopIteration:
             pass
 
-        return reports
+        return [node.report for node in self._nodes]
 
     def is_initialized(self) -> bool:
         return self._nodes is not None and all(

@@ -12,24 +12,19 @@ from dpl.processor.datatype import DataType
 @dataclass
 class NodeExecReport:
     name: str
-    start: int
-    total: int
-    missing_inputs: Optional[List[Dict[str, Path]]] = field(default_factory=list)
-    error_inputs: Optional[List[Dict[str, Path]]] = field(default_factory=list)
-    error_messages: Optional[List[str]] = field(default_factory=list)
+    missing_inputs: List[Dict[str, str]] = field(default_factory=list)
+    error_inputs: List[Dict[str, str]] = field(default_factory=list)
+    error_messages: List[str] = field(default_factory=list)
 
     def add_error(self, inputs: Dict[str, Path], message: str) -> None:
-        self.error_inputs.append(inputs)
+        self.error_inputs.append({key: str(path) for key, path in inputs.items()})
         self.error_messages.append(message)
 
     def add_missing(self, inputs: Dict[str, Path]) -> None:
-        self.missing_inputs.append(inputs)
+        self.missing_inputs.append({key: str(path) for key, path in inputs.items()})
 
-    @classmethod
-    def no_information(
-        cls, name: str, start: int = 0, total: int = -1
-    ) -> "NodeExecReport":
-        return cls(name, start, total, None, None, None)
+    def to_dict(self) -> Dict[str, Any]:
+        return dict(self.__dict__)
 
 
 class BaseResource:
@@ -96,12 +91,14 @@ class BaseNode(metaclass=NodeRegistry):
         self.inputs = inputs
         self.outputs = outputs
 
+        self._report = NodeExecReport(self.__class__.__name__)
+
     def __call__(
         self,
         verbose: bool = False,
         chunk_size: Optional[int] = None,
         test_run: bool = True,
-    ) -> NodeExecReport:
+    ) -> None:
         name = self.__class__.__name__
         if not self.is_initialized():
             raise RuntimeError(f"Node {name!r} is not initialized.")
@@ -121,9 +118,7 @@ class BaseNode(metaclass=NodeRegistry):
     def __len__(self) -> int:
         return self._length
 
-    def run_sequence(self, start: int, num: int, verbose: bool) -> NodeExecReport:
-        name = self.__class__.__name__
-        report = NodeExecReport(name, start, num)
+    def run_sequence(self, start: int, num: int, verbose: bool) -> None:
         iterator = range(start, start + num)
         if verbose:
             desc = self.get_description(start, num)
@@ -139,11 +134,9 @@ class BaseNode(metaclass=NodeRegistry):
                         try:
                             self.run_single(input_paths, output_paths)
                         except RuntimeError as err:
-                            report.add_error(input_paths, str(err))
+                            self._report.add_error(input_paths, str(err))
                     else:
-                        report.add_missing(input_paths)
-
-        return report
+                        self._report.add_missing(input_paths)
 
     @abc.abstractmethod
     def run_single(
@@ -152,6 +145,10 @@ class BaseNode(metaclass=NodeRegistry):
         output_paths: Dict[str, Path],
     ) -> None:
         pass
+
+    @property
+    def report(self) -> NodeExecReport:
+        return self._report
 
     def is_initialized(self) -> bool:
         return self.inputs is not None and self.outputs is not None
