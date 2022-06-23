@@ -1,7 +1,7 @@
 import abc
 from pathlib import Path
 import subprocess as sp
-from typing import Dict, Callable
+from typing import Callable, Dict, Iterable, List
 
 from joblib import Parallel, delayed
 from tqdm import tqdm
@@ -10,7 +10,7 @@ from dpl.processor.nodes.base import BaseNode, NodeExecReport
 from dpl.processor.datatype import DataType
 
 
-FFMPEG_CONVERT_CMD = """ffmpeg \\
+FFMPEG_CONVERT_CMD = """< /dev/null ffmpeg \\
 -hide_banner -loglevel panic -nostats \\
 -i {source} {target} -y"""
 
@@ -41,22 +41,25 @@ class FfmpegBaseNode(BaseNode):
         super().__init__(recompute)
         self.num_jobs = num_jobs
 
+        if self.__class__.__name__ != "FfmpegBaseNode":
+            self.check_input_output()
+
     def run_sequence(self, start: int, num: int, verbose: bool) -> NodeExecReport:
         name = self.__class__.__name__
-        if self.is_base():
-            raise RuntimeError(f"This is instance of the base class: {name}")
 
         report = NodeExecReport.no_information(name, start, num)
+        indices = self._choose_indices_to_process(range(start, start + num))
 
         input_key = self.input_types[0].key
         output_key = self.output_types[0].key
+
         iterator = zip(
-            self.inputs[input_key][start : start + num],
-            self.outputs[output_key][start : start + num],
+            (self.inputs[input_key][index] for index in indices),
+            (self.outputs[output_key][index] for index in indices),
         )
         if verbose:
             desc = self.get_description(start, num)
-            iterator = tqdm(iterator, desc=desc, total=num)
+            iterator = tqdm(iterator, desc=desc, total=len(indices))
 
         convert_fn = self.get_convert_fn()
         with Parallel(n_jobs=self.num_jobs, prefer="processes") as parallel:
@@ -67,8 +70,35 @@ class FfmpegBaseNode(BaseNode):
     def get_convert_fn(self) -> Callable[[Path, Path], None]:
         return convert
 
-    def is_base(self) -> bool:
-        return not bool(self.input_types) and not bool(self.output_types)
+    def check_input_output(self) -> None:
+        if len(self.input_types) != 1:
+            raise RuntimeError(
+                f"There should be exactly 1 input type, got {len(self.input_types)} "
+                f"({self.__class__.__name__})"
+            )
+        if len(self.output_types) != 1:
+            raise RuntimeError(
+                f"There should be exactly 1 output type, got {len(self.output_types)} "
+                f"({self.__class__.__name__})"
+            )
+
+    def _choose_indices_to_process(self, indices: Iterable[int]) -> List[int]:
+        indices_to_process = []
+        for index in indices:
+            input_paths = {
+                dt.key: self.inputs[dt.key][index] for dt in self.input_types
+            }
+            output_paths = {
+                dt.key: self.outputs[dt.key][index] for dt in self.output_types
+            }
+
+            input_exists = self.check_exist(input_paths)
+            need_computation = self.recompute or not self.check_exist(output_paths)
+
+            if input_exists and need_computation:
+                indices_to_process.append(index)
+
+        return indices_to_process
 
 
 class VideoToImagesNode(FfmpegBaseNode):
