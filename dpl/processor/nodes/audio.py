@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Iterable, Optional, Tuple
 
 import numpy as np
 import torch
@@ -23,8 +23,7 @@ class Wav2vecResource(BaseResource):
         super().load()
 
     def unload(self) -> None:
-        if self.is_loaded():
-            del self.encoder
+        del self.encoder
         super().unload()
 
 
@@ -38,7 +37,7 @@ class Wav2vecNode(BaseNode):
         checkpoint: str = "facebook/wav2vec2-base",
         batch_size: int = 8,
         num_workers: int = 4,
-        recompute: bool = True,
+        recompute: bool = False,
     ) -> None:
         super().__init__(recompute)
         self.resource = Wav2vecResource(checkpoint, device)
@@ -49,7 +48,8 @@ class Wav2vecNode(BaseNode):
         name = self.__class__.__name__
         report = NodeExecReport(name, start, num)
 
-        dataloader = self.make_dataloader(start, num)
+        indices = self._choose_indices_to_process(range(start, start + num))
+        dataloader = self.make_dataloader(indices)
         sample_rate = dataloader.dataset.sample_rate
 
         if verbose:
@@ -57,36 +57,57 @@ class Wav2vecNode(BaseNode):
             dataloader = tqdm(dataloader, desc=desc, total=len(dataloader))
 
         with self.resource:
-            global_index = start
+            data_index = 0
             for batch in dataloader:
                 batch_size = len(batch)
                 try:
                     outputs = self.resource.encoder.batch_encode(batch, sample_rate)
 
                 except Exception as exc:
-                    slc = slice(global_index, global_index + batch_size)
-                    inputs = {"wav": self.inputs["wav"][slc]}
+                    error_indices = indices[data_index : data_index + batch_size]
+                    inputs = {
+                        "wav": [self.inputs["wav"][index] for index in error_indices]
+                    }
                     report.add_error(inputs, str(exc))
 
                 else:
                     # TODO: Parallelize saving?
                     for offset in range(batch_size):
-                        index = global_index + offset
+                        index = indices[data_index + offset]
                         for key, value in outputs.items():
                             path = self.outputs[key][index]
                             path.parent.mkdir(parents=True, exist_ok=True)
                             np.save(path, value[offset])
 
-                global_index += batch_size
+                data_index += batch_size
 
         return report
 
-    def make_dataloader(self, start: int, num: int) -> DataLoader:
+    def make_dataloader(self, indices: List[int]) -> DataLoader:
+        audio_paths = [self.inputs["wav"][index] for index in indices]
         return DataLoader(
-            dpl.wav2vec.WavDataset(self.inputs["wav"][start : start + num]),
+            dpl.wav2vec.WavDataset(audio_paths),
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             shuffle=False,
             pin_memory=True,
             collate_fn=lambda x: x,
         )
+
+    def _choose_indices_to_process(self, indices: Iterable[int]) -> List[int]:
+        indices_to_process = []
+        for index in indices:
+            input_paths = {
+                dt.key: self.inputs[dt.key][index] for dt in self.input_types
+            }
+            output_paths = {
+                dt.key: self.outputs[dt.key][index] for dt in self.output_types
+            }
+
+            input_exists = self.check_exist(input_paths)
+            need_computation = self.recompute or not self.check_exist(output_paths)
+
+            if input_exists and need_computation:
+                indices_to_process.append(index)
+
+        return indices_to_process
