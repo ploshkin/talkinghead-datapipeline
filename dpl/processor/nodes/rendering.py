@@ -45,9 +45,8 @@ class RenderingResource(BaseResource):
         super().load()
 
     def unload(self) -> None:
-        if self.is_loaded():
-            del self.model
-            del self.albedo
+        del self.model
+        del self.albedo
         super().unload()
 
 

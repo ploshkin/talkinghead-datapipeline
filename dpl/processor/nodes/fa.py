@@ -43,8 +43,7 @@ class FaceAlignmentResource(BaseResource):
         super().load()
 
     def unload(self) -> None:
-        if self.is_loaded():
-            del self.fa
+        del self.fa
         super().unload()
 
 

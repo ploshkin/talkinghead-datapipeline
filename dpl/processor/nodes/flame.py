@@ -40,8 +40,7 @@ class FlameResource(BaseResource):
         super().load()
 
     def unload(self) -> None:
-        if self.is_loaded():
-            del self.model
+        del self.model
         super().unload()
 
 

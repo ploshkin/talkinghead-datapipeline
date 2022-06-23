@@ -46,7 +46,8 @@ class BaseResource:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-        self.unload()
+        if self.is_loaded():
+            self.unload()
 
     def is_loaded(self) -> bool:
         return self.__loaded
