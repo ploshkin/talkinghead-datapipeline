@@ -13,6 +13,11 @@ For Python3.9 / CUDA 11.3 installation just run:
 $ ./scripts/create_dpl_venv.py
 ```
 
+### Note on HDF5
+Some computational nodes use `h5py` module to pack data into HDF5 containers.
+And we use [jpeg plugin](https://github.com/CARS-UChicago/jpegHDF5) to save space when storing images,
+so you should follow their [Installation Guide](https://github.com/CARS-UChicago/jpegHDF5#installing-the-jpeg-filter-plugin)
+
 ## Usage
 ### 1. Define computation graph
 Like this:
@@ -74,7 +79,7 @@ $ python run.py \
 * [ ] Better error handling
 * [ ] Parallel over GPUs
 * [ ] Nodes for visualizations
-* [ ] Nodes for packing datasets into containers (like H5)
+* [+] Nodes for packing datasets into containers (like H5)
 * [ ] Parametrizable image format: support JPEG and PNG
 * [ ] Post-check output shapes for Numpy datatypes
 * [ ] Support filtering input paths
