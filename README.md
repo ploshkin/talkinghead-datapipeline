@@ -15,8 +15,22 @@ $ ./scripts/create_dpl_venv.py
 
 ### Note on HDF5
 Some computational nodes use `h5py` module to pack data into HDF5 containers.
-And we use [jpeg plugin](https://github.com/CARS-UChicago/jpegHDF5) to save space when storing images,
-so you should follow their [Installation Guide](https://github.com/CARS-UChicago/jpegHDF5#installing-the-jpeg-filter-plugin)
+And we use [jpeg plugin](https://github.com/CARS-UChicago/jpegHDF5)
+to save space when storing images, so you should follow their
+[Installation Guide](https://github.com/CARS-UChicago/jpegHDF5#installing-the-jpeg-filter-plugin).
+
+The best way to have appropriate versions of 
+`libhdf5.so` and `libjpeg.so`
+is to install [Anaconda](https://docs.anaconda.com/).
+
+If you choose this way, you may use `scripts/build_jpeghdf5.sh` instead of provided
+[build_linux](https://github.com/CARS-UChicago/jpegHDF5/blob/master/build_linux)
+to compile shared library:
+
+```shell
+$ ./scripts/build_jpeghdf5.sh /path/to/anaconda /path/to/jpegHDF5/repo
+```
+
 
 ## Usage
 ### 1. Define computation graph
