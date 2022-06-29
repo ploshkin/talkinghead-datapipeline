@@ -105,7 +105,10 @@ class BaseNode(metaclass=NodeRegistry):
 
         first = 0
         if test_run:
+            recompute = self.recompute
+            self.recompute = True
             yield self.run_sequence(first, 1, verbose)
+            self.recompute = recompute
             first = 1
 
         if chunk_size is not None:
