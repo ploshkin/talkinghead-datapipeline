@@ -20,9 +20,9 @@ def parse_args():
     parser.add_argument("--inputs", type=abs_path, required=True)
     parser.add_argument("--output_dir", type=abs_path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--report_name", type=str, default=DEFAULT_REPORT_NAME)
-    parser.add_argument("--verbose", type=bool, default=True)
+    parser.add_argument("--verbose", action="store_true")
     parser.add_argument("--chunk_size", type=int, default=50)
-    parser.add_argument("--test_run", type=bool, default=True)
+    parser.add_argument("--test_run", action="store_true")
     return parser.parse_args()
 
 

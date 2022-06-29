@@ -15,7 +15,6 @@ HDF5_JPEG_PLUGIN = 32019
 
 
 class H5BaseNode(BaseNode):
-
     def __init__(self, jpeg_quality: int = 95, recompute: bool = False) -> None:
         super().__init__(recompute)
         if not self.check_jpeg_plugin_exists():
@@ -126,18 +125,10 @@ class SourceSequenceNode(H5BaseNode):
 
         if include_types is None:
             exclude_keys = set(dt.key for dt in exclude_types)
-            return {
-                key: path
-                for key, path in paths.items()
-                if key not in exclude_keys
-            }
+            return {key: path for key, path in paths.items() if key not in exclude_keys}
 
         if exclude_types is None:
             include_keys = set(dt.key for dt in include_types)
-            return {
-                key: path
-                for key, path in paths.items()
-                if key in include_keys
-            }
+            return {key: path for key, path in paths.items() if key in include_keys}
 
         raise RuntimeError("Both `include_types` and `exclude_types` were specified.")
