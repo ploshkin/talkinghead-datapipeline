@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import face_alignment
 import numpy as np
@@ -26,7 +26,7 @@ def get_bbox(bboxes: List[np.ndarray]) -> np.ndarray:
 
 
 class FaceAlignmentResource(BaseResource):
-    def __init__(self, filter_threshold: float, device: str) -> None:
+    def __init__(self, device: str, filter_threshold: float = 0.5) -> None:
         super().__init__()
         self.filter_threshold = filter_threshold
         self.device = device
@@ -62,7 +62,7 @@ class FaceDetectionNode(BaseNode):
         super().__init__(recompute)
         self.batch_size = batch_size
         self.num_workers = num_workers
-        self.resource = FaceAlignmentResource(filter_threshold, device)
+        self.resource = FaceAlignmentResource(device, filter_threshold)
 
     def run_single(
         self,
@@ -113,16 +113,53 @@ class FaceAlignmentNode(FaceDetectionNode):
         bboxes = self.detect_faces(input_paths["images"])
 
         landmarks = np.empty((len(bboxes), 68, 2))
-        image_paths = dpl.common.listdir(input_paths["images"])
+        image_paths = dpl.common.listdir(input_paths["images"], ext=[".jpg"])
         for index, (bbox, path) in enumerate(zip(bboxes, image_paths)):
             if np.any(np.isnan(bbox)):
                 landmarks[index] = nan_array(68, 2)
             else:
                 lmks = self.resource.fa.get_landmarks_from_image(
-                    path,
+                    str(path),
                     detected_faces=[bbox],
                 )
                 landmarks[index] = lmks[0]
 
         outputs = {"landmarks": landmarks, "raw_bboxes": bboxes}
         self.save_outputs(outputs, output_paths)
+
+
+class FaceLandmarksNode(BaseNode):
+    input_types = [DataType.IMAGES, DataType.RAW_BBOXES]
+    output_types = [DataType.LANDMARKS]
+
+    def __init__(self, device: str, recompute: bool = False) -> None:
+        super().__init__(recompute)
+        self.resource = FaceAlignmentResource(device)
+
+    def run_single(
+        self,
+        input_paths: Dict[str, Path],
+        output_paths: Dict[str, Path],
+    ) -> None:
+        bboxes = np.load(input_paths["raw_bboxes"])
+
+        landmarks = np.empty((len(bboxes), 68, 2))
+        image_paths = dpl.common.listdir(input_paths["images"], ext=[".jpg"])
+        for index, (bbox, path) in enumerate(zip(bboxes, image_paths)):
+            if np.any(np.isnan(bbox)):
+                landmarks[index] = nan_array(68, 2)
+            else:
+                lmks = self.resource.fa.get_landmarks_from_image(
+                    str(path),
+                    detected_faces=[bbox],
+                )
+                landmarks[index] = lmks[0]
+
+        self.save_outputs({"landmarks": landmarks}, output_paths)
+
+    def save_outputs(
+        self, outputs: Dict[str, np.ndarray], paths: Dict[str, Path]
+    ) -> None:
+        for key, path in paths.items():
+            path.parent.mkdir(parents=True, exist_ok=True)
+            np.save(path, outputs[key])
