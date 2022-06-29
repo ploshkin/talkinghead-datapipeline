@@ -80,6 +80,7 @@ class DataType(Enum):
     VOLUME = NumpyFileType()
     A2EN = BaseType(".npz")
     VID2VID = BaseType(".h5")
+    SRC_SEQ = BaseType(".h5")
 
     def __init__(self, data_type: BaseType) -> None:
         self.key = self.name.lower()
