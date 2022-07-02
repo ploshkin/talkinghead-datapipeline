@@ -26,11 +26,9 @@ class Pytorch3dRasterizer(nn.Module):
     """
 
     def __init__(self, image_size=224):
-        """
-        use fixed raster_settings for rendering faces
-        """
+        """Use fixed raster_settings for rendering faces."""
         super().__init__()
-        raster_settings = {
+        self.raster_settings = {
             "image_size": image_size,
             "blur_radius": 0.0,
             "faces_per_pixel": 1,
@@ -38,22 +36,19 @@ class Pytorch3dRasterizer(nn.Module):
             "max_faces_per_bin": None,
             "perspective_correct": False,
         }
-        raster_settings = util.dict2obj(raster_settings)
-        self.raster_settings = raster_settings
 
     def forward(self, vertices, faces, attributes=None):
         fixed_vertices = vertices.clone()
         fixed_vertices[..., :2] = -fixed_vertices[..., :2]
         meshes_screen = Meshes(verts=fixed_vertices.float(), faces=faces.long())
-        raster_settings = self.raster_settings
         pix_to_face, zbuf, bary_coords, dists = rasterize_meshes(
             meshes_screen,
-            image_size=raster_settings.image_size,
-            blur_radius=raster_settings.blur_radius,
-            faces_per_pixel=raster_settings.faces_per_pixel,
-            bin_size=raster_settings.bin_size,
-            max_faces_per_bin=raster_settings.max_faces_per_bin,
-            perspective_correct=raster_settings.perspective_correct,
+            image_size=self.raster_settings["image_size"],
+            blur_radius=self.raster_settings["blur_radius"],
+            faces_per_pixel=self.raster_settings["faces_per_pixel"],
+            bin_size=self.raster_settings["bin_size"],
+            max_faces_per_bin=self.raster_settings["max_faces_per_bin"],
+            perspective_correct=self.raster_settings["perspective_correct"],
         )
         vismask = (pix_to_face > -1).float()
         D = attributes.shape[-1]
