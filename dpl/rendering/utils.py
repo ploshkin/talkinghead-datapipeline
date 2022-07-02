@@ -1,12 +1,6 @@
 import numpy as np
 import torch
 import torch.nn.functional as F
-import math
-from collections import OrderedDict
-import os
-from scipy.ndimage import morphology
-from skimage.io import imsave
-import cv2
 
 
 def get_radial_uv(uv_size: int, batch_size: int, device: torch.device) -> torch.Tensor:
