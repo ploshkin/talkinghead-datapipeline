@@ -52,11 +52,12 @@ class RenderingResource(BaseResource):
 
 class RenderingNode(BaseNode):
     input_types = [DataType.VERTS, DataType.CAM, DataType.LIGHT]
-    output_types = [DataType.RENDER_NORMAL, DataType.RENDER_UV]
+    output_types = [DataType.RENDER_NORMAL, DataType.RENDER_UV, DataType.RENDER_MASK]
 
     NAME_MAPPING = {
         DataType.RENDER_UV.key: "images",
         DataType.RENDER_NORMAL.key: "normal_images",
+        DataType.RENDER_MASK.key: "alpha_images",
     }
 
     def __init__(

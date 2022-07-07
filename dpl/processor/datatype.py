@@ -65,6 +65,7 @@ class DataType(Enum):
     CROPS = FolderType([".jpg", ".png"])
     RENDER_NORMAL = FolderType([".jpg", ".png"])
     RENDER_UV = FolderType([".jpg", ".png"])
+    RENDER_MASK = FolderType([".jpg", ".png"])
     RAW_BBOXES = NumpyFileType()
     BBOXES = NumpyFileType()
     LANDMARKS = NumpyFileType()

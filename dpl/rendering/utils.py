@@ -28,7 +28,10 @@ def _fix_image(image):
 
 
 def to_image(tensor: torch.Tensor) -> np.ndarray:
-    return _fix_image(_torch_img_to_np(tensor))
+    image = _fix_image(_torch_img_to_np(tensor))
+    if len(image.shape) == 3 and image.shape[2] == 1:
+        image = image[..., 0]
+    return image
 
 
 # ---------------------------- process/generate vertices, normals, faces
