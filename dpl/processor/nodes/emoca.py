@@ -19,9 +19,9 @@ class EmocaResource(BaseResource):
         self.device = torch.device(device)
 
     def load(self) -> None:
-        model = dpl.emoca.EmocaInferenceWrapper()
-        model.load_state_dict(torch.load(self.weights_path))
-        self.model = model.to(self.device)
+        self.model = dpl.emoca.EmocaInferenceWrapper().to(self.device)
+        state_dict = torch.load(self.weights_path, map_location=self.device)
+        self.model.load_state_dict(state_dict)
         self.model.eval()
         super().load()
 

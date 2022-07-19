@@ -15,22 +15,23 @@
   {
     "name": "Wav2vecNode",
     "params": {
-      "device": "cuda:1"
+      "num_workers": 0,
+      "device": "cuda:0"
     }
   },
   {
-    "name": "FaceDetectionNode",
+    "name": "FaceAlignmentNode",
     "params": {
       "filter_threshold": 0.9,
-      "device": "cuda:1",
+      "device": "cuda:0",
       "batch_size": 8,
       "num_workers": 2
     }
   },
   {
-    "name": "TransformRawBboxesNode",
+    "name": "FixedBboxesNode",
     "params": {
-      "extend_factor": 0.2
+      "scale": 1.25
     }
   },
   {
@@ -52,9 +53,9 @@
     "name": "EmocaNode",
     "params": {
       "weights_path": "/home/dlex/reps/datapipeline/assets/emoca.pth",
-      "device": "cuda:1",
-      "batch_size": 16,
-      "num_workers": 4
+      "device": "cuda:0",
+      "batch_size": 8,
+      "num_workers": 2
     }
   },
   {
@@ -62,7 +63,7 @@
     "params": {
       "flame_model_path": "/home/dlex/reps/datapipeline/assets/generic_model.pkl",
       "flame_lmk_embedding_path": "/home/dlex/reps/datapipeline/assets/landmark_embedding.npy",
-      "device": "cuda:1",
+      "device": "cuda:0",
       "n_shape": 100,
       "n_exp": 50,
       "batch_size": 64,
@@ -74,10 +75,20 @@
     "params": {
       "head_template_path": "/home/dlex/reps/datapipeline/assets/head_template.obj",
       "image_size": 320,
-      "device": "cuda:1",
+      "device": "cuda:0",
       "uv_size": 256,
       "batch_size": 64,
       "num_workers": 4
+    }
+  },
+  {
+    "name": "A2enDatasetNode",
+    "params": {}
+  },
+  {
+    "name": "Vid2vidDatasetNode",
+    "params": {
+      "jpeg_quality": 95
     }
   }
 ]

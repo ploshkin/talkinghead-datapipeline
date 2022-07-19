@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional
 from dpl.processor.engine import Engine
 from dpl.processor.nodes.base import NodeExecReport
 
-DEFAULT_OUTPUT_DIR = "/data/datasets/dpl_cache"
+DEFAULT_OUTPUT_DIR = "./datasets/dpl_cache"
 DEFAULT_REPORT_NAME = "report.json"
 
 
