@@ -86,10 +86,7 @@ class EmocaLikeBboxesNode(BaseNode):
     output_types = [DataType.BBOXES]
 
     def __init__(
-        self,
-        scale: float = 1.25,
-        window_size: int = 5,
-        recompute: bool = False
+        self, scale: float = 1.25, window_size: int = 5, recompute: bool = False
     ) -> None:
         super().__init__(recompute)
         self.scale = scale
@@ -155,5 +152,5 @@ class EmocaLikeBboxesNode(BaseNode):
                 [xc - radius, yc - radius, xc + radius, yc + radius]
                 for xc, yc, radius in zip(xcs, ycs, radiuses)
             ],
-            dtype=np.int64
+            dtype=np.int64,
         )
