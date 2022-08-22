@@ -84,7 +84,6 @@ class Vid2vidDatasetNode(H5BaseNode):
 
 class SourceSequenceNode(H5BaseNode):
     input_types = [
-        DataType.VIDEO,
         DataType.IMAGES,
         DataType.BBOXES,
         DataType.CROPS,
@@ -93,8 +92,19 @@ class SourceSequenceNode(H5BaseNode):
         DataType.CAM,
         DataType.LIGHT,
         DataType.LANDMARKS3D,
+        DataType.RENDER_UV,
+        DataType.RENDER_NORMAL,
     ]
     output_types = [DataType.SRC_SEQ]
+
+    def __init__(
+        self,
+        fps: float = 30.0,
+        jpeg_quality: int = 95,
+        recompute: bool = False
+    ) -> None:
+        super().__init__(jpeg_quality, recompute)
+        self.fps = fps
 
     def run_single(
         self,
@@ -104,31 +114,9 @@ class SourceSequenceNode(H5BaseNode):
         path = self.get_output_path(output_paths)
         path.parent.mkdir(parents=True, exist_ok=True)
 
-        fps = common.get_fps(input_paths["video"])
         with h5py.File(path, "w") as h5_file:
-            h5_file.attrs.create("fps", fps)
-            paths = self.filter_paths(input_paths, exclude_types=[DataType.VIDEO])
-            self.write_data(h5_file, paths)
+            h5_file.attrs.create("fps", self.fps)
+            self.write_data(h5_file, input_paths)
 
     def get_output_path(self, output_paths: Dict[str, Path]) -> Path:
         return output_paths["src_seq"]
-
-    def filter_paths(
-        self,
-        paths: Dict[str, Path],
-        *,
-        include_types: Optional[List[DataType]] = None,
-        exclude_types: Optional[List[DataType]] = None,
-    ) -> Dict[str, Path]:
-        if include_types is None and exclude_types is None:
-            return paths
-
-        if include_types is None:
-            exclude_keys = set(dt.key for dt in exclude_types)
-            return {key: path for key, path in paths.items() if key not in exclude_keys}
-
-        if exclude_types is None:
-            include_keys = set(dt.key for dt in include_types)
-            return {key: path for key, path in paths.items() if key in include_keys}
-
-        raise RuntimeError("Both `include_types` and `exclude_types` were specified.")
