@@ -15,13 +15,22 @@ HDF5_JPEG_PLUGIN = 32019
 
 
 class H5BaseNode(BaseNode):
-    def __init__(self, jpeg_quality: int = 95, recompute: bool = False) -> None:
+    def __init__(
+        self,
+        jpeg_quality: int = 95,
+        batch_size: Optional[int] = None,
+        recompute: bool = False,
+    ) -> None:
         super().__init__(recompute)
         if not self.check_jpeg_plugin_exists():
             url = "https://github.com/CARS-UChicago/jpegHDF5"
             raise RuntimeError(f"jpegHDF5 plugin not found. Install it from {url!r}")
 
         self.quality = jpeg_quality
+
+        self.batch_size = batch_size
+        if self.batch_size is not None:
+            self.batch_size = max(1, self.batch_size)
 
     def run_single(
         self,
@@ -34,15 +43,20 @@ class H5BaseNode(BaseNode):
             self.write_data(h5_file, input_paths)
 
     def write_data(self, fd: h5py.File, input_paths: Dict[str, Path]) -> None:
-        for dt in self.input_types:
-            if dt.key in input_paths:
-                if dt.is_sequential():
-                    paths = common.listdir(input_paths[dt.key], ext=dt.extensions())
+        for dt in filter(lambda dt: dt.key in input_paths, self.input_types):
+            if dt.is_sequential():
+                paths = common.listdir(input_paths[dt.key], ext=dt.extensions())
+                if self.batch_size is None:
                     images = np.stack([io.imread(path) for path in paths])
                     self.add_images(fd, dt.key, images)
                 else:
-                    array = np.load(input_paths[dt.key])
-                    fd.create_dataset(dt.key, data=array, compression="gzip")
+                    for start in range(0, len(paths), self.batch_size):
+                        slc = slice(start, start + self.batch_size)
+                        images = np.stack([io.imread(path) for path in paths[slc]])
+                        self.add_images(fd, dt.key, images)
+            else:
+                array = np.load(input_paths[dt.key])
+                fd.create_dataset(dt.key, data=array, compression="gzip")
 
     def add_images(self, fd: h5py.File, key: str, array: np.ndarray) -> None:
         is_color = len(array.shape) == 4 and array.shape[3] == 3
@@ -52,13 +66,19 @@ class H5BaseNode(BaseNode):
         rgb_flag = 1 if is_color else 0
         height, width = array.shape[1:3]
 
-        fd.create_dataset(
-            key,
-            data=array,
-            chunks=(1, *array.shape[1:]),
-            compression=HDF5_JPEG_PLUGIN,
-            compression_opts=(self.quality, width, height, rgb_flag),
-        )
+        if key not in fd:
+            image_shape = (height, width, 3) if is_color else (height, width)
+            fd.create_dataset(
+                key,
+                data=array,
+                chunks=(1, *array.shape[1:]),
+                compression=HDF5_JPEG_PLUGIN,
+                compression_opts=(self.quality, width, height, rgb_flag),
+                maxshape=(None, *image_shape),
+            )
+        else:
+            fd[key].resize(len(fd[key]) + len(array), axis=0)
+            fd[key][-len(array) :] = array
 
     def check_jpeg_plugin_exists(self) -> bool:
         # `/usr/local/hdf5/lib/plugin` is the default HDF5 plugin directory.
@@ -101,9 +121,10 @@ class SourceSequenceNode(H5BaseNode):
         self,
         fps: float = 30.0,
         jpeg_quality: int = 95,
-        recompute: bool = False
+        batch_size: Optional[int] = None,
+        recompute: bool = False,
     ) -> None:
-        super().__init__(jpeg_quality, recompute)
+        super().__init__(jpeg_quality, batch_size, recompute)
         self.fps = fps
 
     def run_single(
