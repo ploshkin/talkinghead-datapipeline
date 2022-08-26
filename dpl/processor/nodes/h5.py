@@ -145,7 +145,7 @@ class SourceSequenceNode(H5BaseNode):
         return output_paths["src_seq"]
 
 
-class Vid2vidDatasetNode(H5BaseNode):
+class Vid2vidAudioNode(H5BaseNode):
     input_types = [
         DataType.LANDMARKS,
         DataType.WAV2VEC,
