@@ -147,7 +147,6 @@ class SourceSequenceNode(H5BaseNode):
 
 class Vid2vidDatasetNode(H5BaseNode):
     input_types = [
-        DataType.VIDEO,
         DataType.LANDMARKS,
         DataType.WAV2VEC,
         DataType.VOLUME,
@@ -159,12 +158,14 @@ class Vid2vidDatasetNode(H5BaseNode):
 
     def __init__(
         self,
+        fps: float,
         window_size: int = 16,
         jpeg_quality: int = 95,
         batch_size: Optional[int] = None,
         recompute: bool = False,
     ) -> None:
         super().__init__(jpeg_quality, batch_size, recompute)
+        self.fps = fps
         self.window_size = window_size
 
     def run_single(
@@ -175,13 +176,12 @@ class Vid2vidDatasetNode(H5BaseNode):
         path = self.get_output_path(output_paths)
         path.parent.mkdir(parents=True, exist_ok=True)
 
-        fps = common.get_fps(input_paths["video"])
         num = len(common.listdir(input_paths["crops"]))
 
-        volume = wav2vec_utils.resample(np.load(input_paths["volume"]), num, fps)
+        volume = wav2vec_utils.resample(np.load(input_paths["volume"]), num, self.fps)
         volume = self.average_features(volume, self.window_size)
 
-        wav2vec = wav2vec_utils.resample(np.load(input_paths["wav2vec"]), num, fps)
+        wav2vec = wav2vec_utils.resample(np.load(input_paths["wav2vec"]), num, self.fps)
         wav2vec = self.average_features(wav2vec, self.window_size)
 
         landmarks = np.load(input_paths["landmarks"])
