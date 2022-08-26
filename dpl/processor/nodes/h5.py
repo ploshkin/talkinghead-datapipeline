@@ -8,6 +8,8 @@ import skimage.io as io
 from dpl import common
 from dpl.processor.nodes.base import BaseNode
 from dpl.processor.datatype import DataType
+from dpl.processor import utils
+from dpl.wav2vec import utils as wav2vec_utils
 
 # To use JPEG compression in HDF5 you should install jpegHDF5 plugin.
 # See: https://github.com/CARS-UChicago/jpegHDF5
@@ -141,3 +143,65 @@ class SourceSequenceNode(H5BaseNode):
 
     def get_output_path(self, output_paths: Dict[str, Path]) -> Path:
         return output_paths["src_seq"]
+
+
+class Vid2vidDatasetNode(H5BaseNode):
+    input_types = [
+        DataType.VIDEO,
+        DataType.LANDMARKS,
+        DataType.WAV2VEC,
+        DataType.VOLUME,
+        DataType.CROPS,
+        DataType.RENDER_UV,
+        DataType.RENDER_NORMAL,
+    ]
+    output_types = [DataType.VID2VID_AUDIO]
+
+    def __init__(
+        self,
+        window_size: int = 16,
+        jpeg_quality: int = 95,
+        batch_size: Optional[int] = None,
+        recompute: bool = False,
+    ) -> None:
+        super().__init__(jpeg_quality, batch_size, recompute)
+        self.window_size = window_size
+
+    def run_single(
+        self,
+        input_paths: Dict[str, Path],
+        output_paths: Dict[str, Path],
+    ) -> None:
+        path = self.get_output_path(output_paths)
+        path.parent.mkdir(parents=True, exist_ok=True)
+
+        fps = common.get_fps(input_paths["video"])
+        num = len(common.listdir(input_paths["crops"]))
+
+        volume = wav2vec_utils.resample(np.load(input_paths["volume"]), num, fps)
+        volume = self.average_features(volume, self.window_size)
+
+        wav2vec = wav2vec_utils.resample(np.load(input_paths["wav2vec"]), num, fps)
+        wav2vec = self.average_features(wav2vec, self.window_size)
+
+        landmarks = np.load(input_paths["landmarks"])
+        blinks = utils.get_blinks_data(landmarks)["average_blink"]
+
+        with h5py.File(path, "w") as h5_file:
+            data_paths = {
+                key: path
+                for key, path in input_keys.items()
+                if key in ["crops", "render_uv", "render_normal"]
+            }
+            self.write_data(h5_file, data_paths)
+
+            fd.create_dataset("wav2vec", data=wav2vec, compression="gzip")
+            fd.create_dataset("volume", data=volume, compression="gzip")
+            fd.create_dataset("blinks", data=blinks, compression="gzip")
+
+    def get_output_path(self, output_paths: Dict[str, Path]) -> Path:
+        return output_paths["vid2vid_audio"]
+
+    @staticmethod
+    def average_features(features: np.ndarray, window_size: int) -> np.ndarray:
+        return utils.as_windowed(features, window_size, mode="edge").mean(axis=1)
