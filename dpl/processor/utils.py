@@ -1,3 +1,4 @@
+from typing import Dict
 from numbers import Number
 
 import numpy as np
@@ -53,7 +54,7 @@ def l2_batch(points: np.ndarray, first: int, second: int) -> np.ndarray:
     return np.linalg.norm(points[:, first] - points[:, second], axis=1)
 
 
-def get_blinks_data(self, lmks: np.ndarray) -> Dict[str, np.ndarray]:
+def get_blinks_data(lmks: np.ndarray) -> Dict[str, np.ndarray]:
     l2_lmk = lambda first, second: l2_batch(lmks, first, second)
     left_blink = (l2_lmk(37, 41) + l2_lmk(38, 40)) / (l2_lmk(36, 39) * 2)
     right_blink = (l2_lmk(43, 47) + l2_lmk(44, 46)) / (l2_lmk(42, 45) * 2)

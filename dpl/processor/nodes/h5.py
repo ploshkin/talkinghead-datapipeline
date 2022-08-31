@@ -185,19 +185,34 @@ class Vid2vidAudioNode(H5BaseNode):
         wav2vec = self.average_features(wav2vec, self.window_size)
 
         landmarks = np.load(input_paths["landmarks"])
-        blinks = utils.get_blinks_data(landmarks)["average_blink"]
+        blinks = utils.get_blinks_data(landmarks)
+
+        concat_features = np.concatenate(
+            [
+                wav2vec,
+                volume[:, np.newaxis],
+                blinks["left_blink"][:, np.newaxis],
+                blinks["right_blink"][:, np.newaxis],
+            ],
+            axis=1,
+        )
 
         with h5py.File(path, "w") as h5_file:
             data_paths = {
                 key: path
-                for key, path in input_keys.items()
+                for key, path in input_paths.items()
                 if key in ["crops", "render_uv", "render_normal"]
             }
             self.write_data(h5_file, data_paths)
 
-            fd.create_dataset("wav2vec", data=wav2vec, compression="gzip")
-            fd.create_dataset("volume", data=volume, compression="gzip")
-            fd.create_dataset("blinks", data=blinks, compression="gzip")
+            h5_file.create_dataset("wav2vec", data=wav2vec, compression="gzip")
+            h5_file.create_dataset("volume", data=volume, compression="gzip")
+            h5_file.create_dataset(
+                "average_blink", data=blinks["average_blink"], compression="gzip"
+            )
+            h5_file.create_dataset(
+                "audio_blink_feature", data=concat_features, compression="gzip"
+            )
 
     def get_output_path(self, output_paths: Dict[str, Path]) -> Path:
         return output_paths["vid2vid_audio"]
