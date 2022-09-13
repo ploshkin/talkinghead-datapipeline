@@ -110,9 +110,11 @@ class SourceSequenceNode(H5BaseNode):
         DataType.BBOXES,
         DataType.CROPS,
         DataType.SHAPE,
+        DataType.EXP,
         DataType.POSE,
         DataType.CAM,
         DataType.LIGHT,
+        DataType.LANDMARKS,
         DataType.LANDMARKS3D,
         DataType.RENDER_UV,
         DataType.RENDER_NORMAL,
@@ -137,9 +139,14 @@ class SourceSequenceNode(H5BaseNode):
         path = self.get_output_path(output_paths)
         path.parent.mkdir(parents=True, exist_ok=True)
 
+        landmarks = np.load(input_paths["landmarks"])
+        blinks = utils.get_blinks_data(landmarks)
+
         with h5py.File(path, "w") as h5_file:
             h5_file.attrs.create("fps", self.fps)
             self.write_data(h5_file, input_paths)
+            for key, value in blinks.items():
+                h5_file.create_dataset(key, data=value, compression="gzip")
 
     def get_output_path(self, output_paths: Dict[str, Path]) -> Path:
         return output_paths["src_seq"]
