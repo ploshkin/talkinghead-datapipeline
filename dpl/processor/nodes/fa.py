@@ -15,8 +15,7 @@ def nan_array(*shape: int) -> np.ndarray:
 
 
 def get_bbox_score(bbox: np.ndarray) -> float:
-    x_left, y_top, x_right, y_bottom, conf = bbox
-    return conf * (x_right - x_left) * (y_bottom - y_top)
+    return bbox[4]
 
 
 def get_bbox(bboxes: List[np.ndarray]) -> np.ndarray:
