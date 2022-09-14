@@ -121,16 +121,6 @@ class SourceSequenceNode(H5BaseNode):
     ]
     output_types = [DataType.SRC_SEQ]
 
-    def __init__(
-        self,
-        fps: float = 30.0,
-        jpeg_quality: int = 95,
-        batch_size: Optional[int] = None,
-        recompute: bool = False,
-    ) -> None:
-        super().__init__(jpeg_quality, batch_size, recompute)
-        self.fps = fps
-
     def run_single(
         self,
         input_paths: Dict[str, Path],
@@ -143,7 +133,6 @@ class SourceSequenceNode(H5BaseNode):
         blinks = utils.get_blinks_data(landmarks)
 
         with h5py.File(path, "w") as h5_file:
-            h5_file.attrs.create("fps", self.fps)
             self.write_data(h5_file, input_paths)
             for key, value in blinks.items():
                 h5_file.create_dataset(key, data=value, compression="gzip")
