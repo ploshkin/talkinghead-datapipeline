@@ -9,6 +9,7 @@ from transformers import Wav2Vec2ForPreTraining, Wav2Vec2Processor
 class AudioFeatureExtractor:
 
     FPS: int = 50
+    MAX_DURATION_SEC: float = 10.0
 
     def __init__(
         self,
@@ -62,15 +63,33 @@ class AudioFeatureExtractor:
 
     @torch.no_grad()
     def _encode(self, waveform: List[np.ndarray], sample_rate: int) -> np.ndarray:
-        data = self.processor(
-            waveform,
-            return_tensors="pt",
-            padding="longest",
-            sampling_rate=sample_rate,
-        )
-        input_values = data.input_values.to(self.device)
-        output = self.model(input_values.detach())
-        return output.projected_quantized_states.detach().cpu().numpy()
+        aufio_features = []
+
+        for wf in waveform:
+            num_samples = sample_rate * self.MAX_DURATION_SEC
+            if len(wf) > num_samples:
+                wf_list = [
+                    wf[start : start + num_samples]
+                    for start in range(0, len(wf), num_samples)
+                ]
+            else:
+                wf_list = [wf]
+
+            data = self.processor(
+                wf_list,
+                return_tensors="pt",
+                padding="longest",
+                sampling_rate=sample_rate,
+            )
+
+            input_values = data.input_values.to(self.device)
+            output = self.model(input_values.detach())
+            features = np.concatenate(
+                output.projected_quantized_states.detach().cpu().numpy()
+            )
+            audio_features.append(features)
+
+        return np.stack(audio_features)
 
     def _compute_audio_volume(
         self, waveform: np.ndarray, sample_rate: int
