@@ -63,10 +63,10 @@ class AudioFeatureExtractor:
 
     @torch.no_grad()
     def _encode(self, waveform: List[np.ndarray], sample_rate: int) -> np.ndarray:
-        aufio_features = []
+        audio_features = []
 
         for wf in waveform:
-            num_samples = sample_rate * self.MAX_DURATION_SEC
+            num_samples = int(sample_rate * self.MAX_DURATION_SEC)
             if len(wf) > num_samples:
                 wf_list = [
                     wf[start : start + num_samples]
