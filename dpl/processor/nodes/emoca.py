@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Dict, List
 
 import numpy as np
+from scipy import signal
 import torch
 from torch.utils.data import DataLoader
 
@@ -45,12 +46,14 @@ class EmocaNode(BaseNode):
         self,
         weights_path: Path,
         device: str,
+        use_smoothing: bool = False,
         batch_size: int = 4,
         num_workers: int = 4,
         recompute: bool = False,
     ) -> None:
         super().__init__(recompute)
         self.resource = EmocaResource(weights_path, device)
+        self.use_smoothing = use_smoothing
         self.batch_size = batch_size
         self.num_workers = num_workers
 
@@ -59,8 +62,10 @@ class EmocaNode(BaseNode):
         input_paths: Dict[str, Path],
         output_paths: Dict[str, Path],
     ) -> None:
-        outputs = self.estimate_flame_codes(input_paths)
-        self.save_outputs(outputs, output_paths)
+        flame_codes = self.estimate_flame_codes(input_paths)
+        if self.use_smoothing:
+            flame_codes = self.smooth_flame_codes(flame_codes)
+        self.save_outputs(flame_codes, output_paths)
 
     def estimate_flame_codes(
         self, input_paths: Dict[str, Path]
@@ -78,6 +83,18 @@ class EmocaNode(BaseNode):
                 batched_codes[key].append(codes[key])
 
         return {key: np.concatenate(batched_codes[key]) for key in keys}
+
+    def smooth_flame_codes(
+        self, flame_codes: Dict[str, np.ndarray]
+    ) -> Dict[str, np.ndarray]:
+        return {
+            "shape": signal.savgol_filter(flame_codes["shape"], 25, 3, axis=0),
+            "exp": flame_codes["exp"],
+            "pose": signal.savgol_filter(flame_codes["pose"], 7, 3, axis=0),
+            "cam": signal.savgol_filter(flame_codes["cam"], 11, 3, axis=0),
+            "light": flame_codes["light"],
+            "tex": flame_codes["tex"],
+        }
 
     def save_outputs(
         self, outputs: Dict[str, np.ndarray], paths: Dict[str, Path]
