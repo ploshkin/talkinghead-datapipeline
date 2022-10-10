@@ -86,11 +86,20 @@ class EmocaLikeBboxesNode(BaseNode):
     output_types = [DataType.BBOXES]
 
     def __init__(
-        self, scale: float = 1.25, window_size: int = 5, recompute: bool = False
+        self,
+        scale: float = 1.25,
+        window_size: int = 5,
+        equal_size: bool = False,
+        size_quantile: float = 0.75,
+        recompute: bool = False,
+        use_smoothing: bool = False,
     ) -> None:
         super().__init__(recompute)
         self.scale = scale
         self.window_size = window_size
+        self.equal_size = equal_size
+        self.quantile = size_quantile
+        self.use_smoothing = use_smoothing
 
     def run_single(
         self,
@@ -102,7 +111,12 @@ class EmocaLikeBboxesNode(BaseNode):
             raise RuntimeError(
                 f"NaN values in landmarks, source = '{input_paths['landmarks']}'."
             )
-        bboxes = self.smooth_bboxes(self.get_bboxes(landmarks))
+        bboxes = self.get_bboxes(landmarks)
+        if self.use_smoothing:
+            bboxes = self.smooth_bboxes(bboxes)
+        if self.equal_size:
+            bboxes = self.make_equal_size(bboxes)
+
         output_paths["bboxes"].parent.mkdir(parents=True, exist_ok=True)
         np.save(output_paths["bboxes"], bboxes)
 
@@ -154,3 +168,28 @@ class EmocaLikeBboxesNode(BaseNode):
             ],
             dtype=np.int64,
         )
+
+    def make_equal_size(self, bboxes: np.ndarray) -> np.ndarray:
+        sizes_hor = bboxes[..., 2] - bboxes[..., 0]
+        sizes_ver = bboxes[..., 3] - bboxes[..., 1]
+
+        assert (sizes_hor == sizes_ver).all()
+
+        sizes = sizes_hor.copy()
+
+        size = np.quantile(sizes, self.quantile).astype(bboxes.dtype)
+        size += size % 2
+
+        result_bboxes = np.zeros_like(bboxes)
+
+        offsets = (sizes - size) // 2
+        result_bboxes[:, 0] = bboxes[:, 0] + offsets
+        result_bboxes[:, 1] = bboxes[:, 1] + offsets
+
+        # Clip negative top left coordinates.
+        result_bboxes[result_bboxes < 0] = 0
+
+        result_bboxes[:, 2] = result_bboxes[:, 0] + size
+        result_bboxes[:, 3] = result_bboxes[:, 1] + size
+
+        return result_bboxes
