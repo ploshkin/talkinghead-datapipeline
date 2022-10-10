@@ -20,6 +20,11 @@ FFMPEG_TO_IMG_CMD = """< /dev/null ffmpeg \\
 -i {source} -start_number 0 -qscale:v 3 \\
 {target}/%6d{ext} -y"""
 
+FFMPEG_TO_VIDEO_CMD = """< /dev/null ffmpeg \\
+-hide_banner -loglevel panic -nostats \\
+-i {source}/%6d{ext} -start_number 0 -qscale:v 3 \\
+{target} -y"""
+
 
 def convert(source: Path, target: Path) -> None:
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -30,6 +35,14 @@ def convert(source: Path, target: Path) -> None:
 def convert_video_to_images(source: Path, target: Path, ext: str = ".jpg") -> None:
     target.mkdir(parents=True, exist_ok=True)
     command = FFMPEG_TO_IMG_CMD.format(source=str(source), target=str(target), ext=ext)
+    sp.run(command, shell=True, stdout=sp.DEVNULL, stderr=sp.STDOUT)
+
+
+def convert_images_to_video(source: Path, target: Path, ext: str = ".jpg") -> None:
+    source.mkdir(parents=True, exist_ok=True)
+    command = FFMPEG_TO_VIDEO_CMD.format(
+        source=str(source), target=str(target), ext=ext
+    )
     sp.run(command, shell=True, stdout=sp.DEVNULL, stderr=sp.STDOUT)
 
 
@@ -113,6 +126,22 @@ class VideoToImagesNode(FfmpegBaseNode):
 
         def convert_fn(source: Path, target: Path) -> None:
             convert_video_to_images(source, target, ext)
+
+        return convert_fn
+
+
+class ToVideoBaseNode(FfmpegBaseNode):
+    def __init__(
+        self, ext: str = ".jpg", num_jobs: int = 32, recompute: bool = False
+    ) -> None:
+        super().__init__(num_jobs, recompute)
+        self.ext = ext
+
+    def get_convert_fn(self) -> Callable[[Path, Path], None]:
+        ext = self.ext
+
+        def convert_fn(source: Path, target: Path) -> None:
+            convert_images_to_video(source, target, ext)
 
         return convert_fn
 
