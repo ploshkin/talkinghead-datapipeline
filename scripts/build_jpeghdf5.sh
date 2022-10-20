@@ -27,5 +27,5 @@ popd
 cd $CURDIR
 
 echo "Now move \
-'${JPEGHDF5_ROOT}/build/libjpeg_h5plugin.so' to \
-'/usr/local/hdf5/lib/plugin'"
+    '${JPEGHDF5_ROOT}/build/libjpeg_h5plugin.so' to \
+    '/usr/local/hdf5/lib/plugin/' (sudo is needed)"
