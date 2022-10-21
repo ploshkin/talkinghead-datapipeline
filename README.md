@@ -6,21 +6,21 @@ Easy dataset preparation for speaking avatar model training.
 Docker container can reduce pain in your butthole, so use it.
 First of all, you'll have to load all LFS data and init submodules:
 ```shell
-$ git lfs fetch --all
-$ git submodule update --init --recursive
+git lfs fetch --all
+git submodule update --init --recursive
 ```
 
 Then build an image and run interactive shell inside it:
 ```shell
 # Build an image
-$ docker build -t IMAGE_NAME .
+docker build -t IMAGE_NAME .
 # Run shell
-$ docker run -it --gpus all --entrypoint=/bin/bash IMAGE_NAME 
+docker run -it --gpus all --entrypoint=/bin/bash IMAGE_NAME 
 ```
 
 To ensure your image is built properly, run tests inside the container:
 ```shell
-$ pytest tests
+pytest tests
 ```
 
 ### Local (for development)
@@ -32,9 +32,9 @@ then you'll have 99% chance to use this tool.
 
 #### Create Python venv
 ```shell
-$ python3 -m venv dpl-venv
-$ source dpl-venv/bin/activate
-$ ./scripts/install_deps.sh
+python3 -m venv dpl-venv
+source dpl-venv/bin/activate
+./scripts/install_deps.sh
 ```
 
 #### Install jpegHDF5 plugin
@@ -48,7 +48,7 @@ You may choose one of the two options to build it under your machine.
 * Download and install Anaconda
 * Run installation script
 ```shell
-$ sudo bash scripts/build_jpeghdf5_anaconda.sh \
+sudo bash scripts/build_jpeghdf5_anaconda.sh \
     thirdparty/jpegHDF5 \
     PATH/TO/ANACONDA
 ```
@@ -57,18 +57,18 @@ $ sudo bash scripts/build_jpeghdf5_anaconda.sh \
 * Ensure you have the latest versions of `libjpeg` and `libhdf5`
 ```shell
 # On Ubuntu
-$ sudo apt-get update -y
-$ sudo apt-get install -y libjpeg-dev libhdf5-dev
+sudo apt-get update -y
+sudo apt-get install -y libjpeg-dev libhdf5-dev
 ```
 * Run installation script
 ```shell
-$ sudo bash scripts/build_jpeghdf5.sh thirdparty/jpegHDF5
+sudo bash scripts/build_jpeghdf5.sh thirdparty/jpegHDF5
 ```
 
 #### Test your environment
 Run to see if all dependencies installed correctly:
 ```shell
-$ pytest tests
+pytest tests
 ```
 
 
@@ -121,7 +121,7 @@ can be found in `dpl/processor/datatypes.py`.
 Save the graph and inputs to JSON-files 
 
 ```shell
-$ python run.py \
+python run.py \
     --graph "path/to/graph/file.json" \
     --inputs "path/to/inputs/file.json" \
     --output_dir "path/to/output/root"
