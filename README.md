@@ -3,15 +3,22 @@ Easy dataset preparation for speaking avatar model training.
 
 ## Installation
 ### Docker
-Use docker to reduce pain in your butthole to the minimum:
+Docker container can reduce pain in your butthole, so use it.
+First of all, you'll have to load all LFS data and init submodules:
+```shell
+$ git lfs fetch --all
+$ git submodule update --init --recursive
+```
+
+Then build an image and run interactive shell inside it:
 ```shell
 # Build an image
 $ docker build -t IMAGE_NAME .
-# Run
+# Run shell
 $ docker run -it --gpus all --entrypoint=/bin/bash IMAGE_NAME 
 ```
 
-To ensure that your image is built properly, run tests inside the container:
+To ensure your image is built properly, run tests inside the container:
 ```shell
 $ pytest tests
 ```
