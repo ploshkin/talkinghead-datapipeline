@@ -1,0 +1,3 @@
+[submodule "thirdparty/jpegHDF5"]
+	path = thirdparty/jpegHDF5
+	url = git@github.com:CARS-UChicago/jpegHDF5.git

@@ -1,0 +1,12 @@
+chumpy
+fvcore
+h5py
+imageio
+joblib
+librosa
+numpy
+opencv-python
+Pillow
+pytest
+scikit-image
+wandb

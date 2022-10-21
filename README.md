@@ -2,33 +2,66 @@
 Easy dataset preparation for speaking avatar model training.
 
 ## Installation
-Now it depends on Python3.9 and CUDA 11.3 but it's not really a necessity. 
-
-The most crucial packages are `torch`, `pytorch3d`, `transformers`,
-so if you install them properly with your Python/CUDA
-then you'll 99% sure be able to use this tool.
-
-For Python3.9 / CUDA 11.3 installation just run:
+### Docker
+Use docker to reduce pain in your butthole to the minimum:
 ```shell
-$ ./scripts/create_dpl_venv.py
+# Build an image
+$ docker build -t IMAGE_NAME .
+# Run
+$ docker run -it --gpus all --entrypoint=/bin/bash IMAGE_NAME 
 ```
 
-### Note on HDF5
-Some computational nodes use `h5py` module to pack data into HDF5 containers.
-And we use [jpeg plugin](https://github.com/CARS-UChicago/jpegHDF5)
-to save space when storing images, so you should follow their
-[Installation Guide](https://github.com/CARS-UChicago/jpegHDF5#installing-the-jpeg-filter-plugin).
-
-The best way to have appropriate versions of 
-`libhdf5.so` and `libjpeg.so`
-is to install [Anaconda](https://docs.anaconda.com/).
-
-If you choose this way, you may use `scripts/build_jpeghdf5.sh` instead of provided
-[build_linux](https://github.com/CARS-UChicago/jpegHDF5/blob/master/build_linux)
-to compile shared library:
-
+To ensure that your image is built properly, run tests inside the container:
 ```shell
-$ ./scripts/build_jpeghdf5.sh /path/to/anaconda /path/to/jpegHDF5/repo
+$ pytest tests
+```
+
+### Local (for development)
+The tool is tested under Python3.9 / CUDA 11.3 machines only.
+
+The most crucial packages are `torch`, `pytorch3d`, `transformers`,
+so if you install them properly for your Python/CUDA
+then you'll have 99% chance to use this tool.
+
+#### Create Python venv
+```shell
+$ python3 -m venv dpl-venv
+$ source dpl
+$ ./scripts/install_deps.sh
+```
+
+#### Install jpegHDF5 plugin
+Some computational nodes use `h5py` module to pack data into HDF5 containers.
+In addition, we use [jpeg plugin](https://github.com/CARS-UChicago/jpegHDF5)
+to save space when storing images.
+
+You may choose one of the two options to build it under your machine.
+
+**1. Stable, but with [Anaconda](https://docs.anaconda.com/)**
+* Download and install Anaconda
+* Run installation script
+```shell
+$ sudo bash scripts/build_jpeghdf5_anaconda.sh \
+    thirdparty/jpegHDF5 \
+    PATH/TO/ANACONDA
+```
+
+**2. Unstable, but without Anaconda**
+* Ensure you have the latest versions of `libjpeg` and `libhdf5`
+```shell
+# On Ubuntu
+$ sudo apt-get update -y
+$ sudo apt-get install -y libjpeg-dev libhdf5-dev
+```
+* Run installation script
+```shell
+$ sudo bash scripts/build_jpeghdf5.sh thirdparty/jpegHDF5
+```
+
+#### Test your environment
+Run to see if all dependencies installed correctly:
+```shell
+$ pytest tests
 ```
 
 
@@ -88,16 +121,14 @@ $ python run.py \
 ```
 
 ## Backlog
-* [ ] Continue after restart
+* [x] Dockerize
+* [ ] Nodes for visualizations
 * [ ] Better logging
 * [ ] Better error handling
 * [ ] Parallel over GPUs
-* [ ] Nodes for visualizations
-* [x] Nodes for packing datasets into containers (like H5)
 * [ ] Parametrizable image format: support JPEG and PNG
 * [ ] Post-check output shapes for Numpy datatypes
 * [ ] Support filtering input paths
 * [ ] Datatypes with multiple allowed extensions: listdir outputs files matched to ALL extensions, but that's not desirable
 * [ ] Mypy and format pre-commit check
 * [ ] Tests
-* [ ] Dockerize
