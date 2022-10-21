@@ -33,7 +33,7 @@ then you'll have 99% chance to use this tool.
 #### Create Python venv
 ```shell
 $ python3 -m venv dpl-venv
-$ source dpl
+$ source dpl-venv/bin/activate
 $ ./scripts/install_deps.sh
 ```
 
