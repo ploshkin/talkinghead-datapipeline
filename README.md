@@ -1,20 +1,19 @@
 # Datapipeline
-Easy dataset preparation for speaking avatar model training.
+Easy dataset preparation tool for speaking avatar model training
 
 ## Installation
-### Docker
-Docker container can reduce pain in your butthole, so use it.
 First of all, you'll have to load all LFS data and init submodules:
 ```shell
 git lfs fetch --all
 git submodule update --init --recursive
 ```
 
-Then build an image and run interactive shell inside it:
+### Docker
+Docker container can reduce pain in your butthole, so use it:
 ```shell
 # Build an image
 docker build -t IMAGE_NAME .
-# Run shell
+# Run container and launch interactive shell
 docker run -it --gpus all --entrypoint=/bin/bash IMAGE_NAME 
 ```
 
