@@ -141,6 +141,25 @@ class SourceSequenceNode(H5BaseNode):
         return output_paths["src_seq"]
 
 
+class SourceSequenceWithAlphaNode(SourceSequenceNode):
+    input_types = [
+        DataType.IMAGES,
+        DataType.ALPHA,
+        DataType.BBOXES,
+        DataType.CROPS,
+        DataType.SHAPE,
+        DataType.EXP,
+        DataType.POSE,
+        DataType.CAM,
+        DataType.LIGHT,
+        DataType.LANDMARKS,
+        DataType.LANDMARKS3D,
+        DataType.RENDER_UV,
+        DataType.RENDER_NORMAL,
+    ]
+    output_types = [DataType.SRC_SEQ]
+
+
 class Vid2vidAudioNode(H5BaseNode):
     input_types = [
         DataType.LANDMARKS,

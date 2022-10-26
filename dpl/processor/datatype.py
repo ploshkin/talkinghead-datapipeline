@@ -62,6 +62,7 @@ class DataType(Enum):
     WAV = BaseType(".wav")
     AAC = BaseType(".m4a")
     IMAGES = FolderType([".jpg", ".png"])
+    ALPHA = FolderType([".jpg", ".png"])
     CROPS = FolderType([".jpg", ".png"])
     RENDER_NORMAL = FolderType([".jpg", ".png"])
     RENDER_UV = FolderType([".jpg", ".png"])
